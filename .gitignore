@@ -2,3 +2,6 @@
 *.pdf
 *.so
 *.c
+*.iml
+*.xml
+*.o
