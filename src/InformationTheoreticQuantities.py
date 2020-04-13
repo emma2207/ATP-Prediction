@@ -35,6 +35,10 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
         output_file_name = (
                 target_dir + "results/" + "LearningRate_Ecouple_"
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
+    elif quantity == 'mutual_info':
+        output_file_name = (
+                target_dir + "results/" + "MutualInfo_Ecouple_"
+                + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
 
@@ -75,6 +79,7 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
             Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
             information[ii] = Imem - Ipred
+
         elif quantity == 'learning_rate':
             flux_array = empty((2, N, N))
             calc_flux(
@@ -94,6 +99,13 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
             information[ii] = trapz(
                 trapz(learning, dx=dx, axis=1), dx=dx
             )
+
+        elif quantity == 'mutual_info':
+            # instantaneous memory
+            mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+            Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+            information[ii] = Imem
 
     ax.plot(Ecouple_array, information, 'o', color='C0', label='$0$', markersize=8)
 
@@ -163,7 +175,13 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
                 trapz(learning, dx=dx, axis=1), dx=dx
             )
 
-    maxpos = argmax(information)
+        elif quantity == 'mutual_info':
+            mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+            Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+            information[ii] = Imem
+
+    # maxpos = argmax(information)
     # ax.axvline(Ecouple_array_tot[maxpos], linestyle='--', color='grey')
     ax.plot(Ecouple_array_tot, information, 'o', color='C1', label='$2$', markersize=8)
 
@@ -175,6 +193,8 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
         ax.set_ylabel(r'$I(\theta_{\rm o}(t + \Delta t), \theta_1(t))$', fontsize=20)
     elif quantity == 'learning_rate':
         ax.set_ylabel(r'$\ell_1$', fontsize=20)
+    elif quantity == 'mutual_info':
+        ax.set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t))$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_ylim((0, None))
@@ -187,7 +207,7 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
-def plot_nostalgia_Ecouple_grid(target_dir):  # grid of plots of the flux as a function of the phase offset
+def plot_nostalgia_Ecouple_grid(target_dir, quantity):  # grid of plots of the flux as a function of the phase offset
     Ecouple_array_tot = array(
         [2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
     psi1_array = array([2.0, 4.0, 8.0])
@@ -195,8 +215,13 @@ def plot_nostalgia_Ecouple_grid(target_dir):  # grid of plots of the flux as a f
     phi = 0.0
     information = zeros((Ecouple_array_tot.size, psi1_array.size, psi_ratio.size))
 
-    output_file_name = (
-            target_dir + "results/" + "Nostalgia_Ecouple_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_.pdf")
+    if quantity == 'nostalgia':
+        output_file_name = (
+                target_dir + "results/" + "Nostalgia_Ecouple_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_.pdf")
+    elif quantity == 'learning_rate':
+        output_file_name = (
+                target_dir + "results/" + "LearningRate_Ecouple_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" +
+                "_.pdf")
 
     f, axarr = plt.subplots(3, 3, sharex='all', sharey='all', figsize=(8, 6))
 
@@ -228,33 +253,49 @@ def plot_nostalgia_Ecouple_grid(target_dir):  # grid of plots of the flux as a f
                     print('Missing file')
                     print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
-                step_X = empty((N, N))
-                step_probability_X(
-                    step_X, prob_ss_array, drift_at_pos, diffusion_at_pos,
-                    N, dx, 0.001
-                )
+                if quantity == 'nostalgia':
+                    step_X = empty((N, N))
+                    step_probability_X(
+                        step_X, prob_ss_array, drift_at_pos, diffusion_at_pos,
+                        N, dx, 0.001
+                    )
 
-                # instantaneous memory
-                mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
-                Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+                    # instantaneous memory
+                    mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+                    Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
 
-                # instantaneous predictive power
-                pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
-                Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+                    # instantaneous predictive power
+                    pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+                    Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
-                information[ii, i, j] = Imem - Ipred
+                    information[ii, i, j] = Imem - Ipred
+                elif quantity == 'learning_rate':
+                    flux_array = empty((2, N, N))
+                    calc_flux(
+                        positions, prob_ss_array, drift_at_pos, diffusion_at_pos,
+                        flux_array, N, dx
+                    )
 
-            maxpos = argmax(information, axis=0)
-            axarr[i, j].axvline(Ecouple_array_tot[maxpos[i, j]], linestyle='--', color='grey')
+                    Dpxgy = empty((N, N))
+                    calc_derivative_pxgy(
+                        prob_ss_array, prob_ss_array.sum(axis=0),
+                        Dpxgy,
+                        N, dx
+                    )
+
+                    learning = flux_array[1, ...] * Dpxgy
+                    information[ii] = trapz(trapz(learning, dx=dx, axis=1), dx=dx)
+
+            # maxpos = argmax(information, axis=0)
+            # axarr[i, j].axvline(Ecouple_array_tot[maxpos[i, j]], linestyle='--', color='grey')
             axarr[i, j].plot(Ecouple_array_tot, information[:, i, j], 'o', color='C1', label='$2$', markersize=8)
 
             axarr[i, j].yaxis.offsetText.set_fontsize(14)
             axarr[i, j].tick_params(axis='y', labelsize=14)
             axarr[i, j].set_xscale('log')
-            # axarr[i, j].set_ylabel(r'$I_{\rm mem} - I_{\rm pred}$', fontsize=20)
             axarr[i, j].spines['right'].set_visible(False)
             axarr[i, j].spines['top'].set_visible(False)
-            axarr[i, j].set_ylim((0, 2.1*10**-7))
+            # axarr[i, j].set_ylim((0, 2.1*10**-7))
 
             if j == 0 and i > 0:
                 axarr[i, j].yaxis.offsetText.set_fontsize(0)
@@ -271,8 +312,12 @@ def plot_nostalgia_Ecouple_grid(target_dir):  # grid of plots of the flux as a f
     f.tight_layout()
     f.subplots_adjust(bottom=0.12, left=0.12, right=0.9, top=0.88, wspace=0.1, hspace=0.1)
     f.text(0.5, 0.01, r'$\beta E_{\rm couple}$', ha='center', fontsize=24)
-    f.text(0.01, 0.5, r'$I_{\rm mem} - I_{\rm pred}$', va='center', rotation='vertical',
-           fontsize=24)
+    if quantity == 'nostalgia':
+        f.text(0.01, 0.5, r'$I_{\rm mem} - I_{\rm pred}$', va='center', rotation='vertical',
+               fontsize=24)
+    elif quantity == 'learning_rate':
+        f.text(0.01, 0.5, r'$\ell_1$', va='center', rotation='vertical',
+               fontsize=24)
     f.text(0.5, 0.95, r'$-\mu_{\rm H^+} / \mu_{\rm ATP}$', ha='center', rotation=0, fontsize=24)
     f.text(0.95, 0.5, r'$\mu_{\rm H^+}\ (k_{\rm B} T / \rm rad)$', va='center', rotation=270, fontsize=24)
     f.savefig(output_file_name.format(E0, E1, num_minima1, num_minima2, phi))
@@ -379,6 +424,6 @@ def plot_correlation_nostalgia_power_peaks(target_dir):
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    plot_ITC_Ecouple(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
-    # plot_nostalgia_Ecouple_grid(target_dir)
+    plot_ITC_Ecouple(target_dir, 'mutual_info')  # options 'nostalgia', 'learning_rate', 'mutual_info'
+    # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
     # plot_correlation_nostalgia_power_peaks(target_dir)
