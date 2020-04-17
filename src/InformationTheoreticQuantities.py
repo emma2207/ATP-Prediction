@@ -22,7 +22,7 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
-def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a function of the phase offset
+def plot_ITQ_Ecouple(target_dir, quantity):  # grid of plots of the flux as a function of the phase offset
     Ecouple_array_tot = array(
         [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
          45.25, 64.0, 90.51, 128.0])
@@ -39,6 +39,10 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
         output_file_name = (
                 target_dir + "results/" + "MutualInfo_Ecouple_"
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
+    elif quantity == 'relative_entropy':
+        output_file_name = (
+                target_dir + "results/" + "RelEntropy_Ecouple_"
+                + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
 
@@ -54,11 +58,12 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
         try:
             data_array = loadtxt(
                 input_file_name.format(0.0, Ecouple, 0.0, psi_1, psi_2, num_minima1, num_minima2, phi),
-                usecols=(0, 3, 4, 5, 6, 7, 8))
+                usecols=(0, 1, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array)))  # check grid size
             prob_ss_array = data_array[:, 0].T.reshape((N, N))
-            drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
-            diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
+            prob_eq_array = data_array[:, 1].T.reshape((N, N))
+            drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
         except OSError:
             print('Missing file')
             print(input_file_name.format(0.0, Ecouple, 0.0, psi_1, psi_2, num_minima1, num_minima2, phi))
@@ -94,7 +99,7 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
                 N, dx
             )
 
-            learning = flux_array[1, ...] * Dpxgy
+            learning = flux_array[1, ...] * log(Dpxgy)
 
             information[ii] = trapz(
                 trapz(learning, dx=dx, axis=1), dx=dx
@@ -106,6 +111,9 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
             Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
 
             information[ii] = Imem
+
+        elif quantity == 'relative_entropy':
+            information[ii] = (prob_ss_array * log(prob_ss_array/prob_eq_array)).sum(axis=None)
 
     ax.plot(Ecouple_array, information, 'o', color='C0', label='$0$', markersize=8)
 
@@ -130,11 +138,12 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi),
-                usecols=(0, 3, 4, 5, 6, 7, 8))
+                usecols=(0, 1, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array)))  # check grid size
             prob_ss_array = data_array[:, 0].T.reshape((N, N))
-            drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
-            diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
+            prob_eq_array = data_array[:, 1].T.reshape((N, N))
+            drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
         except OSError:
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
@@ -181,6 +190,9 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
 
             information[ii] = Imem
 
+        elif quantity == 'relative_entropy':
+            information[ii] = (prob_ss_array * log(prob_ss_array/prob_eq_array)).sum(axis=None)
+
     # maxpos = argmax(information)
     # ax.axvline(Ecouple_array_tot[maxpos], linestyle='--', color='grey')
     ax.plot(Ecouple_array_tot, information, 'o', color='C1', label='$2$', markersize=8)
@@ -190,11 +202,13 @@ def plot_ITC_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
     ax.set_xscale('log')
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
     if quantity == 'nostalgia':
-        ax.set_ylabel(r'$I(\theta_{\rm o}(t + \Delta t), \theta_1(t))$', fontsize=20)
+        ax.set_ylabel(r'$I_{\rm mem} - I_{\rm pred}$', fontsize=20)
     elif quantity == 'learning_rate':
         ax.set_ylabel(r'$\ell_1$', fontsize=20)
     elif quantity == 'mutual_info':
         ax.set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t))$', fontsize=20)
+    elif quantity == 'relative_entropy':
+        ax.set_ylabel(r'$\mathcal{D}_{\rm KL}( P_{\rm ss} || P_{\rm eq} )$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_ylim((0, None))
@@ -283,7 +297,7 @@ def plot_nostalgia_Ecouple_grid(target_dir, quantity):  # grid of plots of the f
                         N, dx
                     )
 
-                    learning = flux_array[1, ...] * Dpxgy
+                    learning = flux_array[1, ...] * log(Dpxgy)
                     information[ii] = trapz(trapz(learning, dx=dx, axis=1), dx=dx)
 
             # maxpos = argmax(information, axis=0)
@@ -424,6 +438,7 @@ def plot_correlation_nostalgia_power_peaks(target_dir):
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    plot_ITC_Ecouple(target_dir, 'mutual_info')  # options 'nostalgia', 'learning_rate', 'mutual_info'
+    plot_ITQ_Ecouple(target_dir, 'nostalgia')  # options 'nostalgia', 'learning_rate', 'mutual_info',
+    # 'relative_entropy'
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
     # plot_correlation_nostalgia_power_peaks(target_dir)
