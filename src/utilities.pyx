@@ -183,7 +183,7 @@ cdef void calc_derivative_pxgy_func(
         ((p_now[0, 0]/marginal_now[0]) - (p_now[0, N-2]/marginal_now[N-2]))/(2*dx)
         )
     out_array[N-1, 0] = (
-        ((p_now[N-1, 1]/marginal_now[0]) - (p_now[N-1, N-1]/marginal_now[N-2]))/(2*dx)
+        ((p_now[N-1, 1]/marginal_now[1]) - (p_now[N-1, N-1]/marginal_now[N-1]))/(2*dx)
         )
     out_array[N-1, N-1] = (
         ((p_now[N-1, 0]/marginal_now[0]) - (p_now[N-1, N-2]/marginal_now[N-2]))/(2*dx)
