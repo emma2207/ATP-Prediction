@@ -23,9 +23,10 @@ Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling stre
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
 def plot_ITQ_Ecouple(target_dir, quantity):  # grid of plots of the flux as a function of the phase offset
-    Ecouple_array_tot = array(
-        [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
-         45.25, 64.0, 90.51, 128.0])
+    # Ecouple_array_tot = array(
+    #     [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
+    #      45.25, 64.0, 90.51, 128.0])
+    Ecouple_array_tot = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
 
     if quantity == 'nostalgia':
         output_file_name = (
@@ -45,6 +46,8 @@ def plot_ITQ_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
+
+    ax.axhline(0, color='black')
 
     # Fokker-Planck zero-barriers
     phi = 0.0
@@ -118,6 +121,7 @@ def plot_ITQ_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
     ax.plot(Ecouple_array, information, 'o', color='C0', label='$0$', markersize=8)
 
     # Fokker-Planck results (barriers)
+    phi = 2.0944
     information = zeros(Ecouple_array_tot.size)
 
     for ii, Ecouple in enumerate(Ecouple_array_tot):
@@ -211,7 +215,8 @@ def plot_ITQ_Ecouple(target_dir, quantity):  # grid of plots of the flux as a fu
         ax.set_ylabel(r'$\mathcal{D}_{\rm KL}( P_{\rm ss} || P_{\rm eq} )$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.set_ylim((0, None))
+    ax.spines['bottom'].set_visible(False)
+    # ax.set_ylim((0, None))
 
     leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
     leg_title = leg.get_title()
@@ -436,9 +441,91 @@ def plot_correlation_nostalgia_power_peaks(target_dir):
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
+def plot_ITQ_phi(target_dir, quantity):
+    # Ecouple_array_tot = array(
+    #     [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
+    #      45.25, 64.0, 90.51, 128.0])
+    Ecouple_array_tot = array([2.0, 4.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0, 64.0, 128.0])
+    # Ecouple_array_tot = array([2.0])
+    phi_array = array([0.0, 0.349066, 0.698132, 1.0472, 1.39626, 1.74533, 2.0944])
+
+    for ii, Ecouple in enumerate(Ecouple_array_tot):
+
+        if quantity == 'nostalgia':
+            output_file_name = (
+                    target_dir + "results/" + "Nostalgia_phi_"
+                    + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_Ecouple_{6}" + "_.pdf")
+
+        f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
+        ax.axhline(0, color='black')
+
+        # Fokker-Planck results (barriers)
+        information = zeros(phi_array.size)
+
+        for j, phi in enumerate(phi_array):
+
+            if Ecouple in Ecouple_array:
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset/" +
+                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                   "_outfile.dat")
+            elif Ecouple in array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0]):
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_phaseoffset_extra/" +
+                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                   "_outfile.dat")
+            else:
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" +
+                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                   "_outfile.dat")
+
+            try:
+                data_array = loadtxt(
+                    input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi),
+                    usecols=(0, 1, 3, 4, 5, 6, 7, 8))
+                N = int(sqrt(len(data_array)))  # check grid size
+                prob_ss_array = data_array[:, 0].T.reshape((N, N))
+                prob_eq_array = data_array[:, 1].T.reshape((N, N))
+                drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+                diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
+
+            if quantity == 'nostalgia':
+                step_X = empty((N, N))
+                step_probability_X(
+                    step_X, prob_ss_array, drift_at_pos, diffusion_at_pos,
+                    N, dx, 0.001
+                )
+
+                # instantaneous memory
+                mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+                Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+                # instantaneous predictive power
+                pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+                Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+
+                information[j] = Imem - Ipred
+
+        ax.plot(phi_array, information, 'o', color='C1', label='$2$', markersize=8)
+
+        ax.yaxis.offsetText.set_fontsize(14)
+        ax.tick_params(axis='both', labelsize=16)
+        ax.set_xlabel(r'$\phi$', fontsize=20)
+        if quantity == 'nostalgia':
+            ax.set_ylabel(r'$I_{\rm mem} - I_{\rm pred}$', fontsize=20)
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        # ax.set_ylim((0, None))
+
+        f.tight_layout()
+        f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     plot_ITQ_Ecouple(target_dir, 'nostalgia')  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy'
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
     # plot_correlation_nostalgia_power_peaks(target_dir)
+    plot_ITQ_phi(target_dir, 'nostalgia')
