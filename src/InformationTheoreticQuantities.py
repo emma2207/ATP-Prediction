@@ -445,13 +445,14 @@ def plot_correlation_nostalgia_power_peaks(target_dir):
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
 
-def plot_ITQ_phi(target_dir, quantity):
+def plot_ITQ_phi(target_dir, quantity, dt):
     # Ecouple_array_tot = array(
     #     [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
     #      45.25, 64.0, 90.51, 128.0])
-    Ecouple_array_tot = array([2.0, 4.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0, 64.0, 128.0])
+    Ecouple_array_tot = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array_tot = array([2.0])
-    phi_array = array([0.0, 0.349066, 0.698132, 1.0472, 1.39626, 1.74533, 2.0944])
+    phi_array = array([0.0, 0.175, 0.349066, 0.524, 0.698132, 0.873, 1.0472, 1.222, 1.39626, 1.571, 1.74533, 1.92,
+                       2.0944])
 
     for ii, Ecouple in enumerate(Ecouple_array_tot):
 
@@ -468,12 +469,8 @@ def plot_ITQ_phi(target_dir, quantity):
 
         for j, phi in enumerate(phi_array):
 
-            if Ecouple in Ecouple_array:
+            if Ecouple in Ecouple_array and phi in array([0.0, 0.349066, 0.698132, 1.0472, 1.39626, 1.74533, 2.0944]):
                 input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset/" +
-                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-                                   "_outfile.dat")
-            elif Ecouple in array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0]):
-                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_phaseoffset_extra/" +
                                    "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                    "_outfile.dat")
             else:
@@ -498,7 +495,7 @@ def plot_ITQ_phi(target_dir, quantity):
                 step_X = empty((N, N))
                 step_probability_X(
                     step_X, prob_ss_array, drift_at_pos, diffusion_at_pos,
-                    N, dx, 0.001
+                    N, dx, dt
                 )
 
                 # instantaneous memory
@@ -509,19 +506,22 @@ def plot_ITQ_phi(target_dir, quantity):
                 pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
                 Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
-                information[j] = Imem - Ipred
+                information[j] = timescale*(Imem - Ipred)/dt
 
         ax.plot(phi_array, information, 'o', color='C1', label='$2$', markersize=8)
 
         ax.yaxis.offsetText.set_fontsize(14)
         ax.tick_params(axis='both', labelsize=16)
-        ax.set_xlabel(r'$\phi$', fontsize=20)
+        ax.set_xlabel(r'$n \phi$ (\rm rev)', fontsize=20)
         if quantity == 'nostalgia':
-            ax.set_ylabel(r'$I_{\rm mem} - I_{\rm pred}$', fontsize=20)
+            ax.set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=20)
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
+        ax.set_xticks([0, pi / 9, 2 * pi / 9, pi / 3, 4 * pi / 9, 5 * pi / 9, 2 * pi / 3])
+        ax.set_xticklabels(['$0$', '', '', '$1/2$', '', '', '$1$'])
         # ax.set_ylim((0, None))
+        ax.set_xlim((0, 2 * pi/3))
 
         f.tight_layout()
         f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
@@ -610,7 +610,7 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
             pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
             Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
-            learning_rate[ii, i] = (Imem - Ipred)/dt
+            learning_rate[ii, i] = timescale*(Imem - Ipred)/dt
 
             # calculate relative entropy
             rel_entropy[ii, i] = (prob_ss_array * log(prob_ss_array / prob_eq_array)).sum(axis=None)
@@ -637,15 +637,15 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
 
         # plot mutual information
         axarr[2, i].plot(Ecouple_array_tot, mutual_info[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[2, 0].set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t))$', fontsize=14)
+        axarr[2, 0].set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t)) (\rm nats)$', fontsize=14)
 
         # plot learning rate
         axarr[3, i].plot(Ecouple_array_tot, learning_rate[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[3, 0].set_ylabel(r'$\ell_{\rm F_1}$', fontsize=14)
+        axarr[3, 0].set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=14)
 
         # plot relative entropy
         axarr[4, i].plot(Ecouple_array_tot, rel_entropy[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[4, 0].set_ylabel(r'$\mathcal{D}_{\rm KL} ( P_{\rm ss} || P_{\rm eq} )$', fontsize=14)
+        axarr[4, 0].set_ylabel(r'$\mathcal{D}_{\rm KL} ( P_{\rm ss} || P_{\rm eq} ) (\rm nats)$', fontsize=14)
 
         # if j == 0 and i > 0:
         #     axarr[i, j].yaxis.offsetText.set_fontsize(0)
@@ -666,5 +666,5 @@ if __name__ == "__main__":
     # dt = 0.001 is the standard used in the simulations.
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
     # plot_correlation_nostalgia_power_peaks(target_dir)
-    # plot_ITQ_phi(target_dir, 'nostalgia')
-    plot_super_grid(target_dir, 0.001)
+    plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
+    # plot_super_grid(target_dir, 0.001)
