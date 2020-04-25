@@ -20,6 +20,7 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
+
 def calc_flux(p_now, drift_at_pos, diffusion_at_pos, flux_array, N):
     # explicit update of the corners
     # first component
@@ -126,6 +127,43 @@ def calc_flux(p_now, drift_at_pos, diffusion_at_pos, flux_array, N):
                 -(diffusion_at_pos[2, i+1, j]*p_now[i+1, j]-diffusion_at_pos[2, i-1, j]*p_now[i-1, j])/(2.0*dx)
                 -(diffusion_at_pos[3, i, j+1]*p_now[i, j+1]-diffusion_at_pos[3, i, j-1]*p_now[i, j-1])/(2.0*dx)
                 )
+
+
+def derivative_flux(flux_array, dflux_array, N):
+    # explicit update of the corners
+    # first component
+    dflux_array[0, 0, 0] = (flux_array[0, 1, 0] - flux_array[0, N - 1, 0]) / (2.0 * dx)
+    dflux_array[0, 0, N - 1] = (flux_array[0, 1, N - 1] - flux_array[0, N - 1, N - 1]) / (2.0 * dx)
+    dflux_array[0, N - 1, 0] = (flux_array[0, 0, 0] - flux_array[0, N - 2, 0]) / (2.0 * dx)
+    dflux_array[0, N - 1, N - 1] = (flux_array[0, 0, N - 1] - flux_array[0, N - 2, N - 1]) / (2.0 * dx)
+
+    # second component
+    dflux_array[1, 0, 0] = (flux_array[1, 0, 1] - flux_array[1, 0, N - 1]) / (2.0 * dx)
+    dflux_array[1, 0, N - 1] = (flux_array[1, 0, 0] - flux_array[1, 0, N - 2]) / (2.0 * dx)
+    dflux_array[1, N - 1, 0] = (flux_array[1, N - 1, 1] - flux_array[1, N - 1, N - 1]) / (2.0 * dx)
+    dflux_array[1, N - 1, N - 1] = (flux_array[1, N - 1, 0] - flux_array[1, N - 1, N - 2]) / (2.0 * dx)
+
+    for i in range(1, N - 1):
+        # explicitly update for edges not corners
+        # first component
+        dflux_array[0, 0, i] = (flux_array[0, 1, i] - flux_array[0, N - 1, i]) / (2.0 * dx)
+        dflux_array[0, i, 0] = (flux_array[0, i + 1, 0] - flux_array[0, i - 1, 0]) / (2.0 * dx)
+        dflux_array[0, N - 1, i] = (flux_array[0, 0, i] - flux_array[0, N - 2, i]) / (2.0 * dx)
+        dflux_array[0, i, N - 1] = (flux_array[0, i + 1, N - 1] - flux_array[0, i - 1, N - 1]) / (2.0 * dx)
+
+        # second component
+        dflux_array[1, 0, i] = (flux_array[1, 0, i + 1] - flux_array[1, 0, i - 1]) / (2.0 * dx)
+        dflux_array[1, i, 0] = (flux_array[1, i, 1] - flux_array[1, i, N - 1]) / (2.0 * dx)
+        dflux_array[1, N - 1, i] = (flux_array[1, N - 1, i + 1] - flux_array[1, N - 1, i - 1]) / (2.0 * dx)
+        dflux_array[1, i, N - 1] = (flux_array[1, i, 0] - flux_array[1, i, N - 2]) / (2.0 * dx)
+
+        # for points with well defined neighbours
+        for j in range(1, N - 1):
+            # first component
+            dflux_array[0, i, j] = (flux_array[0, i + 1, j] - flux_array[0, i - 1, j]) / (2.0 * dx)
+            # second component
+            dflux_array[1, i, j] = (flux_array[1, i, j + 1] - flux_array[1, i, j - 1]) / (2.0 * dx)
+
 
 def flux_power_efficiency(target_dir): # processing of raw data
     phase_array = array([0.0])
@@ -1000,11 +1038,80 @@ def plot_n0_power_efficiency_Ecouple(target_dir):  # plot power and efficiency a
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, 3.0))
 
+
+def calc_heat_flow():
+    phase_array = array([0.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
+
+    for psi_1 in psi1_array:
+        for psi_2 in psi2_array:
+            integrate_flux_X = empty(phase_array.size)
+            integrate_flux_Y = empty(phase_array.size)
+            integrate_power_X = empty(phase_array.size)
+            integrate_power_Y = empty(phase_array.size)
+            integrate_heat_X = empty(phase_array.size)
+            integrate_heat_Y = empty(phase_array.size)
+
+            for Ecouple in Ecouple_array:
+                for ii, phase_shift in enumerate(phase_array):
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset/" +
+                                       "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                       "_outfile.dat")
+
+                    output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" +
+                                        "heat_flow_" +
+                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+
+                    try:
+                        data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1,
+                                                                    num_minima2, phase_shift),
+                                             usecols=(0, 2, 3, 4, 5, 6, 7, 8))
+                        N = int(sqrt(len(data_array)))  # check grid size
+                        print('Grid size: ', N)
+
+                        prob_ss_array = data_array[:, 0].reshape((N, N))
+                        potential_at_pos = data_array[:, 1].reshape((N, N))
+                        drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+                        diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+
+                        flux_array = zeros((2, N, N))
+                        dflux_array = zeros((2, N, N))
+                        calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
+                        flux_array = asarray(flux_array)/(dx*dx)
+                        derivative_flux(flux_array, dflux_array, N)
+                        dflux_array = asarray(dflux_array)
+
+                        integrate_flux_X[ii] = trapz(trapz(flux_array[0, ...], dx=dx, axis=1), dx=dx)
+                        integrate_flux_Y[ii] = trapz(trapz(flux_array[1, ...], dx=dx, axis=0), dx=dx)
+
+                        integrate_power_X[ii] = psi_1*integrate_flux_X[ii]
+                        integrate_power_Y[ii] = psi_2*integrate_flux_Y[ii]
+
+                        integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx)
+                        integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx)
+
+                    except OSError:
+                        print('Missing file')
+                        print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2,
+                                                     phase_shift))
+
+                with open(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple), "w") as ofile:
+                    for j, phase_shift in enumerate(phase_array):
+                        ofile.write(
+                            f"{phase_shift:.15e}" + "\t"
+                            + f"{integrate_power_X[j]:.15e}" + "\t"
+                            + f"{integrate_power_Y[j]:.15e}" + "\t"
+                            + f"{integrate_heat_X[j]:.15e}" + "\t"
+                            + f"{integrate_heat_Y[j]:.15e}" + "\n")
+                    ofile.flush()
+
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/FokkerPlanck_2D_full/" + \
                  "prediction/fokker_planck/working_directory_cython/"
     # flux_power_efficiency(target_dir)
-    plot_power_Ecouple(target_dir)
+    # plot_power_Ecouple(target_dir)
     # plot_power_efficiency_Ecouple(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_power_efficiency_phi(target_dir)
@@ -1012,3 +1119,4 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_Ecouple(target_dir)
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
+    calc_heat_flow()
