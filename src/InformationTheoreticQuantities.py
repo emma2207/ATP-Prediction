@@ -539,11 +539,91 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
     learning_rate = zeros((Ecouple_array_tot.size, psi1_array.size))
     rel_entropy = zeros((Ecouple_array_tot.size, psi1_array.size))
 
+    mutual_info_zero = zeros((Ecouple_array.size, psi1_array.size))
+    learning_rate_zero = zeros((Ecouple_array.size, psi1_array.size))
+    rel_entropy_zero = zeros((Ecouple_array.size, psi1_array.size))
+
     output_file_name = (
-            target_dir + "results/" + "Super_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_.pdf")
+            target_dir + "results/" + "Super_grid_double_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_.pdf")
 
     f, axarr = plt.subplots(5, 3, sharex='all', figsize=(8, 10))
 
+    # Barrier-less data
+    for i, psi_1 in enumerate(psi1_array):
+        psi_2 = psi2_array[i]
+
+        for ii, Ecouple in enumerate(Ecouple_array_tot):
+            input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/FokkerPlanck_2D_full/prediction/" +
+                               "fokker_planck/working_directory_cython/" + "plotting_data/"
+                               + "flux_zerobarrier_psi1_{0}_psi2_{1}_outfile.dat")
+            try:
+                data_array = loadtxt(input_file_name.format(psi_1, psi_2))
+                Ecouple_array2 = array(data_array[:, 0])
+                flux_x_array = array(data_array[:, 1])
+                flux_y_array = array(data_array[:, 2])
+                power_y = -flux_y_array * psi_2 * 2 * pi * timescale
+                power_x = flux_x_array * psi_1 * 2 * pi * timescale
+                dissipation_zero = power_x - power_y
+            except OSError:
+                print('Missing file no barriers')
+
+        for ii, Ecouple in enumerate(Ecouple_array):
+            input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/2019-05-14/" +
+                               "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                               "_outfile.dat")
+            try:
+                data_array = loadtxt(
+                    input_file_name.format(0.0, Ecouple, 0.0, psi_1, psi_2, num_minima1, num_minima2, phi),
+                    usecols=(0, 1, 3, 4, 5, 6, 7, 8))
+                N = int(sqrt(len(data_array)))  # check grid size
+                prob_ss_array = data_array[:, 0].T.reshape((N, N))
+                prob_eq_array = data_array[:, 1].T.reshape((N, N))
+                drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+                diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+            except OSError:
+                print('Missing file no barriers')
+                print(input_file_name.format(0.0, Ecouple, 0.0, psi_1, psi_2, num_minima1, num_minima2, phi))
+
+            # calculate mutual information
+            mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+            Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+            mutual_info_zero[ii, i] = Imem
+
+            # calculate learning rate (=nostalgia)
+            step_X = empty((N, N))
+            step_probability_X(
+                step_X, prob_ss_array, drift_at_pos, diffusion_at_pos,
+                N, dx, dt
+            )
+
+            mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+            Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+            pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+            Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+
+            learning_rate_zero[ii, i] = timescale*(Imem - Ipred)/dt
+
+            # calculate relative entropy
+            rel_entropy_zero[ii, i] = (prob_ss_array * log(prob_ss_array / prob_eq_array)).sum(axis=None)
+
+        # plot output power
+        axarr[0, i].plot(Ecouple_array2, power_y, '-', color='C0', label='$0$', linewidth=2)
+
+        # plot dissipation
+        axarr[1, i].plot(Ecouple_array2, dissipation_zero, '-', color='C0', label='$0$', linewidth=2)
+
+        # plot mutual information
+        axarr[2, i].plot(Ecouple_array, mutual_info_zero[:, i], 'o', color='C0', label='$0$', markersize=8)
+
+        # plot learning rate
+        axarr[3, i].plot(Ecouple_array, learning_rate_zero[:, i], 'o', color='C0', label='$0$', markersize=8)
+
+        # plot relative entropy
+        axarr[4, i].plot(Ecouple_array, rel_entropy_zero[:, i], 'o', color='C0', label='$0$', markersize=8)
+
+    # Barrier data
     for i, psi_1 in enumerate(psi1_array):
         psi_2 = psi2_array[i]
 
@@ -619,36 +699,36 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
         maxpos = argmax(output_power[:, i], axis=0)
         for j in range(5):
             axarr[j, i].axvline(Ecouple_array_tot[maxpos], linestyle='--', color='grey')
+
+        # plot output power
+        axarr[0, i].plot(Ecouple_array_tot, output_power[:, i], 'o', color='C1', label='$2$', markersize=6)
+        axarr[0, 0].set_ylabel(r'$\beta \mathcal{P}_{\rm ATP} (\rm s^{-1})$', fontsize=14)
+
+        # plot dissipation
+        axarr[1, i].plot(Ecouple_array_tot, dissipation[:, i], 'o', color='C1', label='$2$', markersize=6)
+        axarr[1, 0].set_ylabel(r'$\beta (\mathcal{P}_{\rm H^+} -\mathcal{P}_{\rm ATP}) (\rm s^{-1}) $', fontsize=14)
+
+        # plot mutual information
+        axarr[2, i].plot(Ecouple_array_tot, mutual_info[:, i], 'o', color='C1', label='$2$', markersize=6)
+        axarr[2, 0].set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t)) (\rm nats)$', fontsize=14)
+
+        # plot learning rate
+        axarr[3, i].plot(Ecouple_array_tot, learning_rate[:, i], 'o', color='C1', label='$2$', markersize=6)
+        axarr[3, 0].set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=14)
+
+        # plot relative entropy
+        axarr[4, i].plot(Ecouple_array_tot, rel_entropy[:, i], 'o', color='C1', label='$2$', markersize=6)
+        axarr[4, 0].set_ylabel(r'$\mathcal{D}_{\rm KL} ( P_{\rm ss} || P_{\rm eq} ) (\rm nats)$', fontsize=14)
+
+        for j in range(5):
             axarr[j, i].yaxis.offsetText.set_fontsize(14)
             axarr[j, i].ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
             axarr[j, i].tick_params(axis='y', labelsize=14)
             axarr[j, i].set_xscale('log')
             axarr[j, i].spines['right'].set_visible(False)
             axarr[j, i].spines['top'].set_visible(False)
-
-        # plot output power
-        axarr[0, i].plot(Ecouple_array_tot, output_power[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[0, 0].set_ylabel(r'$\beta \mathcal{P}_{\rm ATP} (\rm s^{-1})$', fontsize=14)
-        axarr[0, i].set_ylim((0, None))
-
-        # plot dissipation
-        axarr[1, i].plot(Ecouple_array_tot, dissipation[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[1, 0].set_ylabel(r'$\beta (\mathcal{P}_{\rm H^+} -\mathcal{P}_{\rm ATP}) (\rm s^{-1}) $', fontsize=14)
-
-        # plot mutual information
-        axarr[2, i].plot(Ecouple_array_tot, mutual_info[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[2, 0].set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t)) (\rm nats)$', fontsize=14)
-
-        # plot learning rate
-        axarr[3, i].plot(Ecouple_array_tot, learning_rate[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[3, 0].set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=14)
-
-        # plot relative entropy
-        axarr[4, i].plot(Ecouple_array_tot, rel_entropy[:, i], 'o', color='C1', label='$2$', markersize=8)
-        axarr[4, 0].set_ylabel(r'$\mathcal{D}_{\rm KL} ( P_{\rm ss} || P_{\rm eq} ) (\rm nats)$', fontsize=14)
-
-        # if j == 0 and i > 0:
-        #     axarr[i, j].yaxis.offsetText.set_fontsize(0)
+            axarr[j, i].set_xlim((2, 150))
+            axarr[j, i].set_ylim(bottom=0)
 
         axarr[0, i].set_title(r'$%.0f$' % psi1_array[i], fontsize=18)
 
@@ -666,5 +746,5 @@ if __name__ == "__main__":
     # dt = 0.001 is the standard used in the simulations.
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
     # plot_correlation_nostalgia_power_peaks(target_dir)
-    plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
-    # plot_super_grid(target_dir, 0.001)
+    # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
+    plot_super_grid(target_dir, 0.001)
