@@ -1,4 +1,4 @@
-from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, amax
+from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -1063,6 +1063,8 @@ def calc_heat_flow():
             integrate_power_Y = empty(phase_array.size)
             integrate_heat_X = empty(phase_array.size)
             integrate_heat_Y = empty(phase_array.size)
+            integrate_entropy_X = empty(phase_array.size)
+            integrate_entropy_Y = empty(phase_array.size)
 
             for Ecouple in Ecouple_array:
                 for ii, phase_shift in enumerate(phase_array):
@@ -1089,18 +1091,25 @@ def calc_heat_flow():
                         flux_array = zeros((2, N, N))
                         dflux_array = zeros((2, N, N))
                         calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
-                        flux_array = asarray(flux_array)/(dx*dx)
+                        flux_array = asarray(flux_array)
                         derivative_flux(flux_array, dflux_array, N)
                         dflux_array = asarray(dflux_array)
 
-                        integrate_flux_X[ii] = trapz(trapz(flux_array[0, ...], dx=dx, axis=1), dx=dx)
-                        integrate_flux_Y[ii] = trapz(trapz(flux_array[1, ...], dx=dx, axis=0), dx=dx)
+                        integrate_flux_X[ii] = trapz(trapz(flux_array[0, ...]))
+                        integrate_flux_Y[ii] = trapz(trapz(flux_array[1, ...]))
 
                         integrate_power_X[ii] = psi_1*integrate_flux_X[ii]
                         integrate_power_Y[ii] = psi_2*integrate_flux_Y[ii]
 
-                        integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx)
-                        integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx)
+                        integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos))
+                        integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos))
+
+                        print(dflux_array[0, ...])
+
+                        print(dflux_array[1, ...])
+
+                        integrate_entropy_X[ii] = trapz(trapz(dflux_array[0, ...] * log(prob_ss_array)))
+                        integrate_entropy_Y[ii] = trapz(trapz(dflux_array[1, ...] * log(prob_ss_array)))
 
                     except OSError:
                         print('Missing file')
@@ -1114,7 +1123,9 @@ def calc_heat_flow():
                             + f"{integrate_power_X[j]:.15e}" + "\t"
                             + f"{integrate_power_Y[j]:.15e}" + "\t"
                             + f"{integrate_heat_X[j]:.15e}" + "\t"
-                            + f"{integrate_heat_Y[j]:.15e}" + "\n")
+                            + f"{integrate_heat_Y[j]:.15e}" + "\t"
+                            + f"{integrate_entropy_X[j]:.15e}" + "\t"
+                            + f"{integrate_entropy_Y[j]:.15e}" + "\n")
                     ofile.flush()
 
 
@@ -1261,6 +1272,6 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_Ecouple(target_dir)
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
-    # calc_heat_flow()
+    calc_heat_flow()
     # plot_2D_prob()
-    plot_marginal_prob()
+    # plot_marginal_prob()
