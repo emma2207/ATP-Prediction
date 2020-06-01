@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from utilities import step_probability_X, calc_flux, calc_derivative_pxgy
+from ATP_energy_transduction import derivative_flux
 
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
@@ -14,8 +15,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -24,11 +25,11 @@ min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barrie
 
 
 def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as a function of the phase offset
-    # Ecouple_array_tot = array(
-    #     [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
-    #      45.25, 64.0, 90.51, 128.0])
     Ecouple_array_tot = array(
-        [2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0])
+        [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
+         45.25, 64.0, 90.51, 128.0])
+    # Ecouple_array_tot = array(
+    #     [2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0])
 
     if quantity == 'nostalgia':
         output_file_name = (
@@ -91,19 +92,16 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
 
         elif quantity == 'learning_rate':
             flux_array = empty((2, N, N))
+            dx = 2 * math.pi / N  # spacing between gridpoints
             calc_flux(
                 positions, prob_ss_array, drift_at_pos, diffusion_at_pos,
                 flux_array, N, dx
             )
 
-            Dpxgy = empty((N, N))
-            calc_derivative_pxgy(
-                prob_ss_array, prob_ss_array.sum(axis=0),
-                Dpxgy,
-                N, dx
-            )
+            dflux_array = empty((2, N, N))
+            derivative_flux(flux_array, dflux_array, N)
 
-            learning = flux_array[1, ...] * log(Dpxgy)
+            learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0)/prob_ss_array)
 
             information[ii] = trapz(
                 trapz(learning, dx=dx, axis=1), dx=dx
@@ -131,18 +129,20 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                            "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                            "_outfile.dat")
 
-        # if Ecouple in Ecouple_array:
-        #     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset/" +
-        #                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-        #                        "_outfile.dat")
-        # elif Ecouple in array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0]):
-        #     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_phaseoffset_extra/" +
-        #                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-        #                        "_outfile.dat")
-        # else:
-        #     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" +
-        #                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-        #                        "_outfile.dat")
+        if Ecouple in Ecouple_array:
+            input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset/" +
+                               "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                               "_outfile.dat")
+        elif Ecouple in array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0]):
+            input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_phaseoffset_extra/" +
+                               "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                               "_outfile.dat")
+        else:
+            if Ecouple == 22.62:
+                Ecouple = 22.63
+            input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" +
+                               "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                               "_outfile.dat")
 
         try:
             data_array = loadtxt(
@@ -189,14 +189,16 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 flux_array, N, dx
             )
 
-            Dpxgy = empty((N, N))
-            calc_derivative_pxgy(
-                prob_ss_array, prob_ss_array.sum(axis=0),
-                Dpxgy,
-                N, dx
-            )
 
-            learning = flux_array[1, ...] * Dpxgy
+            dflux_array = empty((2, N, N))
+            derivative_flux(flux_array, dflux_array, N)
+
+            for i in range(N):
+                for j in range(N):
+                    if prob_ss_array[i, j] == 0.0:
+                        prob_ss_array[i, j] = 1e-18
+
+            learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0)/prob_ss_array)
 
             information[ii] = trapz(
                 trapz(learning, dx=dx, axis=1), dx=dx
@@ -756,7 +758,7 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    plot_ITQ_Ecouple(target_dir, 'nostalgia', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
+    plot_ITQ_Ecouple(target_dir, 'learning_rate', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy' and the last option is dt.
     # dt = 0.001 is the standard used in the simulations.
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
