@@ -1,24 +1,25 @@
-from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log
+from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 
-N = 540  # N x N grid is used for Fokker-Planck simulations
+N = 360  # N x N grid is used for Fokker-Planck simulations
 dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
+Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 
 
 def calc_flux(p_now, drift_at_pos, diffusion_at_pos, flux_array, N):
@@ -237,10 +238,10 @@ def flux_power_efficiency(target_dir): # processing of raw data
 
 
 def plot_power_Ecouple(target_dir):  # plot power and efficiency vs coupling strength
-    # Ecouple_array_tot = array(
-    #     #     [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
-    #     #      45.25, 64.0, 90.51, 128.0])
-    Ecouple_array_tot = array([2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    Ecouple_array_tot = array(
+            [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
+             45.25, 64.0, 90.51, 128.0])
+    # Ecouple_array_tot = array([2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
 
     output_file_name = (
         "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
@@ -310,6 +311,12 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
     Ecouple_array_tot = array(
         [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
          45.25, 64.0, 90.51, 128.0])
+    Ecouple_array3 = array([2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0])
+
+    barrier_heights = array([2.0, 4.0])
+    barrier_label = ['$2$', '$4$', '$6$']
+    colorlst = ['C1', 'C9']
+    offset = [0, 4]
 
     output_file_name = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
@@ -319,37 +326,72 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
     # power plot
     axarr[0].axhline(0, color='black', linewidth=1)  # x-axis
     maxpower = 2 * pi * 0.000085247 * timescale
-    axarr[0].axhline(maxpower, color='black', linestyle=':', linewidth=1)  # line at infinite power coupling
-    axarr[0].axvline(12, color='black', linestyle='--', linewidth=1)  # lining up features in the two plots
+    axarr[0].axhline(maxpower, color='C1', linestyle=':', linewidth=2)  # line at infinite power coupling
     axarr[0].fill_between([1, 250], 0, 31, facecolor='grey', alpha=0.2)  # shading power output
 
+    # efficiency plot
+    axarr[1].axhline(0, color='black', linewidth=1)  # x axis
+    axarr[1].axhline(1, color='C1', linestyle=':', linewidth=2)  # max efficiency
+    axarr[1].fill_between([1, 250], 0, 1, facecolor='grey', alpha=0.2)  # shading power output
+
     # zero-barrier results
-    input_file_name = (target_dir + "plotting_data/"
-                       + "flux_zerobarrier_psi1_{0}_psi2_{1}_outfile.dat")
+    input_file_name = (target_dir + "plotting_data/" + "flux_zerobarrier_psi1_{0}_psi2_{1}_outfile.dat")
     data_array = loadtxt(input_file_name.format(psi_1, psi_2))
     Ecouple_array2 = array(data_array[:, 0])
+    flux_x_array = array(data_array[:, 1])
     flux_y_array = array(data_array[:, 2])
     power_y = -flux_y_array * psi_2
     axarr[0].plot(Ecouple_array2, 2*pi*power_y*timescale, '-', color='C0', label='$0$', linewidth=2)
+    axarr[1].plot(Ecouple_array2, flux_y_array / flux_x_array, '-', color='C0', linewidth=2)
 
-    # Fokker-Planck results (barriers)
+    # peak position estimate output power from theory
+    # Ecouple_est = 3.31 + 4 * pi * (psi_1 - psi_2) / 9
+    # axarr[0].axvline(Ecouple_est, color='black', linestyle='-', linewidth=2)
+
+    # Fokker-Planck results
     i = 0  # only use phase=0 data
-    power_y_array = []
-    for ii, Ecouple in enumerate(Ecouple_array_tot):
-        input_file_name = (target_dir + "plotting_data/" + "flux_power_efficiency_"
-                           + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-        try:
-            data_array = loadtxt(
-                input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple),
-                usecols=(0, 4))
-            if Ecouple in Ecouple_array:  # data format varies a little
-                power_y = array(data_array[i, 1])
-            else:
-                power_y = array(data_array[1])
-            power_y_array = append(power_y_array, power_y)
-        except OSError:
-            print('Missing file flux')
-    axarr[0].plot(Ecouple_array_tot, -2*pi*power_y_array*timescale, 'o', color='C1', label='$2$', markersize=8)
+    for j, E0 in enumerate(barrier_heights):
+        E1 = E0
+        power_y_array = []
+        eff_array = []
+        for ii, Ecouple in enumerate(Ecouple_array_tot):
+            if E0 == 2.0 and Ecouple not in Ecouple_extra:
+                input_file_name = (target_dir + "plotting_data/" + "flux_power_efficiency_"
+                                   + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+            elif E0 == 2.0 and Ecouple in Ecouple_extra:
+                input_file_name = (target_dir + "200511_2kT_extra/" + "flux_power_efficiency_"
+                                   + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+            elif E0 == 4.0:
+                input_file_name = (target_dir + "200506_4kTbarrier/spectral/" + "flux_power_efficiency_"
+                                   + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+            elif E0 == 6.0:
+                input_file_name = (target_dir + "200518_6kTbarrier/" + "flux_power_efficiency_"
+                                   + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+            try:
+                data_array = loadtxt(
+                    input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple),
+                    usecols=(0, 4, 5))
+                if Ecouple in Ecouple_array and E0 == 2.0:  # data format varies a little
+                    power_y_array = append(power_y_array, data_array[i, 1])
+                    eff_array = append(eff_array, data_array[i, 2])
+                else:
+                    power_y_array = append(power_y_array, data_array[1])
+                    eff_array = append(eff_array, data_array[2])
+            except OSError:
+                print('Missing file flux')
+                print(input_file_name.format(4.0, 4.0, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+        axarr[0].axvline(Ecouple_array_tot[argmax(-power_y_array)], linestyle=(offset[j], (4, 4)), color=colorlst[j],
+                         linewidth=2)
+        axarr[1].axvline(Ecouple_array_tot[argmax(-power_y_array)], linestyle=(offset[j], (4, 4)), color=colorlst[j],
+                         linewidth=2)
+        axarr[0].plot(Ecouple_array_tot, -2*pi*power_y_array*timescale, 'o', color=colorlst[j], label=barrier_label[j],
+                      markersize=8)
+        axarr[1].plot(Ecouple_array_tot, eff_array / (-psi_2 / psi_1), 'o', color=colorlst[j], markersize=8)
+
+    # rate calculations theory line efficiency
+    # pos = linspace(1, 128, 200)
+    # theory = 1 - 3 * exp((pi / 3) * (psi_1 - psi_2) - 0.75 * pos)
+    # axarr[1].plot(pos, theory, '--', color='black', linewidth=2)
 
     axarr[0].yaxis.offsetText.set_fontsize(14)
     axarr[0].tick_params(axis='y', labelsize=14)
@@ -358,52 +400,13 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
     axarr[0].spines['top'].set_visible(False)
     axarr[0].spines['bottom'].set_visible(False)
     axarr[0].set_xlim((1.7, 135))
-    axarr[0].set_ylim((-60, 31))
-    axarr[0].set_yticks([-50, -25, 0, 25])
+    axarr[0].set_ylim((None, 31))
+    # axarr[0].set_yticks([-50, -25, 0, 25])
+    # axarr[0].set_yscale('log')
 
-    leg = axarr[0].legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=14, loc='lower right', frameon=False)
+    leg = axarr[0].legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=14, loc='best', frameon=False)
     leg_title = leg.get_title()
     leg_title.set_fontsize(14)
-
-    #####################################################
-    # efficiency plot
-    axarr[1].axhline(0, color='black', linewidth=1)  # x axis
-    axarr[1].axvline(12, color='black', linestyle='--', linewidth=1)  # lining up features
-    axarr[1].axhline(1, color='black', linestyle=':', linewidth=1)  # max efficiency
-    axarr[1].fill_between([1, 250], 0, 1, facecolor='grey', alpha=0.2)  # shading power output
-
-    # zero-barrier curve
-    input_file_name = (
-            target_dir + "plotting_data/"
-            + "Flux_zerobarrier_psi1_{0}_psi2_{1}_outfile.dat")
-    try:
-        data_array = loadtxt(input_file_name.format(psi_1, psi_2))
-        Ecouple_array2 = array(data_array[1:, 0])
-        Ecouple_array2 = append(Ecouple_array2, 128.0)  # add point to end up with curves of equal length
-        flux_x_array = array(data_array[1:, 1])
-        flux_y_array = array(data_array[1:, 2])  # skip the point at zero, which is problematic on a log scale
-        flux_x_array = append(flux_x_array, flux_x_array[-1])  # copy last point to add one
-        flux_y_array = append(flux_y_array, flux_y_array[-1])
-        axarr[1].plot(Ecouple_array2, flux_y_array / (flux_x_array), '-', color='C0', linewidth=2)
-    except:
-        print('Missing data efficiency')
-
-    # Fokker-Planck results (barriers)
-    eff_array = []
-    for ii, Ecouple in enumerate(Ecouple_array_tot):
-        input_file_name = (
-                target_dir + "plotting_data/flux_power_efficiency_"
-                + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-        try:
-            data_array = loadtxt(
-                input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple), usecols=5)
-            if Ecouple in Ecouple_array:
-                eff_array = append(eff_array, data_array[0])
-            else:
-                eff_array = append(eff_array, data_array)
-        except OSError:
-            print('Missing file efficiency')
-    axarr[1].plot(Ecouple_array_tot, eff_array / (-psi_2 / psi_1), 'o', color='C1', markersize=8)
 
     axarr[1].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
     axarr[1].set_ylabel(r'$\eta / \eta^{\rm max}$', fontsize=20)
@@ -416,8 +419,8 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
     axarr[1].set_yticks([-0.5, 0, 0.5, 1.0])
     axarr[1].tick_params(axis='both', labelsize=14)
 
-    f.text(0.05, 0.95, r'$\mathbf{a)}$', ha='center', fontsize=20)
-    f.text(0.05, 0.48, r'$\mathbf{b)}$', ha='center', fontsize=20)
+    # f.text(0.05, 0.95, r'$\mathbf{a)}$', ha='center', fontsize=20)
+    # f.text(0.05, 0.48, r'$\mathbf{b)}$', ha='center', fontsize=20)
     f.subplots_adjust(hspace=0.01)
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -1261,17 +1264,16 @@ def plot_marginal_prob():
 
 
 if __name__ == "__main__":
-    target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/FokkerPlanck_2D_full/" + \
-                 "prediction/fokker_planck/working_directory_cython/"
+    target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/"
     # flux_power_efficiency(target_dir)
     # plot_power_Ecouple(target_dir)
-    # plot_power_efficiency_Ecouple(target_dir)
+    plot_power_efficiency_Ecouple(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_power_efficiency_phi(target_dir)
     # plot_power_phi_single(target_dir)
     # plot_nn_power_efficiency_Ecouple(target_dir)
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
-    calc_heat_flow()
+    # calc_heat_flow()
     # plot_2D_prob()
     # plot_marginal_prob()
