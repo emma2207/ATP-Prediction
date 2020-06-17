@@ -77,7 +77,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'learning_rate_2':
         output_file_name = (
-                target_dir + "results/" + "LearningRate2_Ecouple_"
+                target_dir + "results/" + "Cond_Entropy_FogF1_Ecouple_"
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'mutual_info':
         output_file_name = (
@@ -147,7 +147,6 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
                 Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
-                information[ii] = timescale*(Imem - Ipred)/dt
 
             elif quantity == 'learning_rate':
                 flux_array = empty((2, N, N))
@@ -167,16 +166,21 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 flux_array = empty((2, N, N))
                 calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
 
-                dflux_array = empty((N, N))
-                calc_derivative(flux_array[0, ...].reshape((N, N)), dflux_array, N, dx, 1)
+                # dflux_array_y = empty((N, N))
+                # calc_derivative(flux_array[1, ...].reshape((N, N)), dflux_array_y, N, dx, 1)
+                dflux_array_x = empty((N, N))
+                calc_derivative(flux_array[0, ...].reshape((N, N)), dflux_array_x, N, dx, 0)
 
-                marg = dflux_array * log(prob_ss_array.sum(axis=1))
+                # marg = -dflux_array_x * (log(prob_ss_array.sum(axis=1)) + 1)  # 2 -> 1
+                # cond = dflux_array_x * (log(step_X / step_X.sum(axis=0)) + 1)
 
-                cond = 
+                # marg = dflux_array_y * (log(prob_ss_array.sum(axis=0)) + 1)  # 1 -> 2
+                cond = dflux_array_x * (log(step_X/step_X.sum(axis=1)) + 1 - step_X/step_X.sum(axis=1))
 
-                learning = marg + cond
+                # learning = -(marg - cond)  # l 1->2 = - l 2->1 at steady state
+                learning = cond
 
-                information[ii] = trapz(trapz(learning, dx=1, axis=1), dx=1)
+                information[ii] = trapz(trapz(learning, dx=1), dx=1) * timescale / dt
 
             elif quantity == 'mutual_info':
                 # instantaneous memory
@@ -198,11 +202,11 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
     ax.tick_params(axis='both', labelsize=16)
     ax.set_xscale('log')
     # ax.set_yscale('log')
+    # ax.set_ylim((-0.1, 2.5))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    if quantity == 'nostalgia':
-        ax.set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=20)
-    elif quantity == 'learning_rate' or 'learning_rate_2':
-        ax.set_ylabel(r'$\ell_1$', fontsize=20)
+    if quantity == 'nostalgia' or 'learning_rate' or 'learning_rate_2':
+        ax.set_ylabel(r'$\rm d_{\tau} S[F_{\rm o}(t + \tau) | F_1(t)]$', fontsize=20)
+        # ax.set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=20)
     elif quantity == 'mutual_info':
         ax.set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t))$', fontsize=20)
     elif quantity == 'relative_entropy':
