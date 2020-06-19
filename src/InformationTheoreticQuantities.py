@@ -79,6 +79,10 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
         output_file_name = (
                 target_dir + "results/" + "Cond_Entropy_FogF1_Ecouple_"
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
+    elif quantity == 'learning_rate_3':
+        output_file_name = (
+                target_dir + "results/" + "LearningRate3_Ecouple_"
+                + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'mutual_info':
         output_file_name = (
                 target_dir + "results/" + "MutualInfo_Ecouple_"
@@ -147,6 +151,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
                 Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
+                information[ii] = timescale*(Imem - Ipred) / dt
 
             elif quantity == 'learning_rate':
                 flux_array = empty((2, N, N))
@@ -182,6 +187,23 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
 
                 information[ii] = trapz(trapz(learning, dx=1), dx=1) * timescale / dt
 
+            elif quantity == 'learning_rate_3':
+                denergy = empty((N, N))
+                for i in range(N):
+                    for j in range(N):
+                        denergy[i, j] = - 0.5 * Ecouple * sin(positions[i] - positions[j]) \
+                                        + 1.5 * E1 * sin(3 * positions[j])
+
+                dlogP = empty((N, N))
+                calc_derivative(log(prob_ss_array), dlogP, N, dx, 1)
+
+                dlogfrac = empty((N, N))
+                calc_derivative(log(prob_ss_array.sum(axis=1)[None, :] / prob_ss_array), dlogfrac, N, dx, 1)
+
+                learning = prob_ss_array * (denergy + dlogP) * dlogfrac
+
+                information[ii] = 10**(-3) * trapz(trapz(learning, dx=1), dx=1)
+
             elif quantity == 'mutual_info':
                 # instantaneous memory
                 mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
@@ -204,7 +226,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
     # ax.set_yscale('log')
     # ax.set_ylim((-0.1, 2.5))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    if quantity == 'nostalgia' or 'learning_rate' or 'learning_rate_2':
+    if quantity == 'nostalgia' or 'learning_rate' or 'learning_rate_2' or 'learning_rate_3':
         ax.set_ylabel(r'$\rm d_{\tau} S[F_{\rm o}(t + \tau) | F_1(t)]$', fontsize=20)
         # ax.set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=20)
     elif quantity == 'mutual_info':
@@ -773,7 +795,7 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    plot_ITQ_Ecouple(target_dir, 'learning_rate_2', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
+    plot_ITQ_Ecouple(target_dir, 'learning_rate_3', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy' and the last option is dt.
     # dt = 0.001 is the standard used in the simulations.
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
