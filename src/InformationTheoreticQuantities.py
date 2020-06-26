@@ -171,19 +171,19 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 flux_array = empty((2, N, N))
                 calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
 
-                # dflux_array_y = empty((N, N))
-                # calc_derivative(flux_array[1, ...].reshape((N, N)), dflux_array_y, N, dx, 1)
+                dflux_array_y = empty((N, N))
+                calc_derivative(flux_array[1, ...].reshape((N, N)), dflux_array_y, N, dx, 1)
                 dflux_array_x = empty((N, N))
                 calc_derivative(flux_array[0, ...].reshape((N, N)), dflux_array_x, N, dx, 0)
 
                 # marg = -dflux_array_x * (log(prob_ss_array.sum(axis=1)) + 1)  # 2 -> 1
                 # cond = dflux_array_x * (log(step_X / step_X.sum(axis=0)) + 1)
 
-                # marg = dflux_array_y * (log(prob_ss_array.sum(axis=0)) + 1)  # 1 -> 2
+                marg = dflux_array_y * (log(prob_ss_array.sum(axis=0)) + 1)  # 1 -> 2
                 cond = dflux_array_x * (log(step_X/step_X.sum(axis=1)) + 1 - step_X/step_X.sum(axis=1))
 
-                # learning = -(marg - cond)  # l 1->2 = - l 2->1 at steady state
-                learning = cond
+                learning = -(marg - cond)  # l 1->2 = - l 2->1 at steady state
+                # learning = cond
 
                 information[ii] = trapz(trapz(learning, dx=1), dx=1) * timescale / dt
 
@@ -795,7 +795,7 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    plot_ITQ_Ecouple(target_dir, 'learning_rate_3', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
+    plot_ITQ_Ecouple(target_dir, 'learning_rate_3 ', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy' and the last option is dt.
     # dt = 0.001 is the standard used in the simulations.
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
