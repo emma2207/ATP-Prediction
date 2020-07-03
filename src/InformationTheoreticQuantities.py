@@ -2,7 +2,7 @@ from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asar
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
-from utilities import step_probability_X, calc_flux, calc_derivative_pxgy
+from utilities import step_probability_X, calc_flux, calc_derivative_pxgy, step_probability_Y
 from ATP_energy_transduction import derivative_flux
 
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
@@ -23,6 +23,16 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
+
+
+def calc_marg_derivative(flux_array, dflux_array, N, dx):
+    # explicit update of the corners
+    dflux_array[0] = (flux_array[1] - flux_array[N - 1]) / (2.0 * dx)
+    dflux_array[N - 1] = (flux_array[0] - flux_array[N - 2]) / (2.0 * dx)
+
+    # for points with well defined neighbours
+    for j in range(1, N - 1):
+        dflux_array[j] = (flux_array[j + 1] - flux_array[j - 1]) / (2.0 * dx)
 
 
 def calc_derivative(flux_array, dflux_array, N, dx, k):
@@ -64,7 +74,7 @@ def calc_derivative(flux_array, dflux_array, N, dx, k):
 
 
 def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as a function of the phase offset
-    Barrier_heights = [0.0, 2.0]
+    Barrier_heights = [2.0]
     phi = 0.0
 
     if quantity == 'nostalgia':
@@ -77,7 +87,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'learning_rate_2':
         output_file_name = (
-                target_dir + "results/" + "Cond_Entropy_FogF1_Ecouple_"
+                target_dir + "results/" + "LearningRate2_Ecouple_"
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'learning_rate_3':
         output_file_name = (
@@ -103,7 +113,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
             Ecouple_array_tot = array(
                 [2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
                  45.25, 64.0, 90.51, 128.0])
-            information = zeros(Ecouple_array_tot.size)
+            information = zeros((4, Ecouple_array_tot.size))
 
         for ii, Ecouple in enumerate(Ecouple_array_tot):
             if E1 == 0.0:
@@ -168,6 +178,9 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 step_X = empty((N, N))
                 step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
 
+                step_Y = empty((N, N))
+                step_probability_Y(step_Y, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+
                 flux_array = empty((2, N, N))
                 calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
 
@@ -176,16 +189,21 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 dflux_array_x = empty((N, N))
                 calc_derivative(flux_array[0, ...].reshape((N, N)), dflux_array_x, N, dx, 0)
 
-                # marg = -dflux_array_x * (log(prob_ss_array.sum(axis=1)) + 1)  # 2 -> 1
-                # cond = dflux_array_x * (log(step_X / step_X.sum(axis=0)) + 1)
+                marg2 = dflux_array_x * (log(prob_ss_array.sum(axis=1)) + 1)  # 2 -> 1
+                cond2 = dflux_array_x * (log(step_X / step_X.sum(axis=0)) + 1)
 
                 marg = dflux_array_y * (log(prob_ss_array.sum(axis=0)) + 1)  # 1 -> 2
-                cond = dflux_array_x * (log(step_X/step_X.sum(axis=1)) + 1 - step_X/step_X.sum(axis=1))
+                cond = dflux_array_y * (log(step_Y / step_Y.sum(axis=1)) + 1)
 
-                learning = -(marg - cond)  # l 1->2 = - l 2->1 at steady state
-                # learning = cond
+                learning = marg  # l 1->2 = - l 2->1 at steady state
+                learning2 = -cond
+                learning3 = marg2
+                learning4 = -cond2
 
-                information[ii] = trapz(trapz(learning, dx=1), dx=1) * timescale / dt
+                information[0, ii] = trapz(trapz(learning, dx=1), dx=1)
+                information[1, ii] = trapz(trapz(learning2, dx=1), dx=1)
+                information[2, ii] = trapz(trapz(learning3, dx=1), dx=1)
+                information[3, ii] = trapz(trapz(learning4, dx=1), dx=1)
 
             elif quantity == 'learning_rate_3':
                 denergy = empty((N, N))
@@ -194,13 +212,13 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                         denergy[i, j] = - 0.5 * Ecouple * sin(positions[i] - positions[j]) \
                                         + 1.5 * E1 * sin(3 * positions[j])
 
-                dlogP = empty((N, N))
-                calc_derivative(log(prob_ss_array), dlogP, N, dx, 1)
+                dP = empty((N, N))
+                calc_derivative(prob_ss_array, dP, N, dx, 1)
 
-                dlogfrac = empty((N, N))
-                calc_derivative(log(prob_ss_array.sum(axis=1)[None, :] / prob_ss_array), dlogfrac, N, dx, 1)
+                dPy = empty((N, N))
+                calc_marg_derivative(prob_ss_array.sum(axis=0), dPy, N, dx)
 
-                learning = prob_ss_array * (denergy + dlogP) * dlogfrac
+                learning = prob_ss_array * (denergy + dP/prob_ss_array) * ((dPy/prob_ss_array.sum(axis=0))[None, :] - dP/prob_ss_array)
 
                 information[ii] = 10**(-3) * trapz(trapz(learning, dx=1), dx=1)
 
@@ -214,10 +232,18 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
             elif quantity == 'relative_entropy':
                 information[ii] = (prob_ss_array * log(prob_ss_array/prob_eq_array)).sum(axis=None)
 
+        ax.axhline(0, color='black')
         if E0 == 0.0:
             ax.plot(Ecouple_array_tot, information, 'o', color='C0', label='$0$', markersize=8)
         elif E0 == 2.0:
-            ax.plot(Ecouple_array_tot, information, 'o', color='C1', label='$2$', markersize=8)
+            # ax.plot(Ecouple_array_tot, information, 'o', color='C1', label=r'$2$', markersize=8)
+            ax.plot(Ecouple_array_tot, information[0], 'o', color='C1', label=r'$d_t S[\theta_1(t)]$', markersize=8)
+            ax.plot(Ecouple_array_tot, information[1], 'o', color='C2',
+                    label=r'$-\partial_{\tau} S[\theta_{\rm 1}(t + \tau)| \theta_{\rm o}(t)]$', markersize=8)
+            ax.plot(Ecouple_array_tot, information[2], 'o', color='C3',
+                    label=r'$d_t S[\theta_{\rm o}(t)]$', markersize=8)
+            ax.plot(Ecouple_array_tot, information[3], 'o', color='C4',
+                    label=r'$-\partial_{\tau} S[\theta_{\rm o}(t + \tau)| \theta_1(t)]$', markersize=8)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)
@@ -226,19 +252,20 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
     # ax.set_yscale('log')
     # ax.set_ylim((-0.1, 2.5))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    if quantity == 'nostalgia' or 'learning_rate' or 'learning_rate_2' or 'learning_rate_3':
-        ax.set_ylabel(r'$\rm d_{\tau} S[F_{\rm o}(t + \tau) | F_1(t)]$', fontsize=20)
-        # ax.set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=20)
-    elif quantity == 'mutual_info':
-        ax.set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t))$', fontsize=20)
-    elif quantity == 'relative_entropy':
-        ax.set_ylabel(r'$\mathcal{D}_{\rm KL}( P_{\rm ss} || P_{\rm eq} )$', fontsize=20)
+    # if quantity == 'nostalgia' or 'learning_rate' or 'learning_rate_2' or 'learning_rate_3':
+    #     # ax.set_ylabel(r'$\rm d_{\tau} S[F_{\rm o}(t + \tau) | F_1(t)]$', fontsize=20)
+    #     ax.set_ylabel(r'$\ell_{\rm F_1} (\rm nats/s)$', fontsize=20)
+    # elif quantity == 'mutual_info':
+    #     ax.set_ylabel(r'$I(\theta_{\rm o}(t), \theta_1(t))$', fontsize=20)
+    # elif quantity == 'relative_entropy':
+    #     ax.set_ylabel(r'$\mathcal{D}_{\rm KL}( P_{\rm ss} || P_{\rm eq} )$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
-    leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
-    leg_title = leg.get_title()
-    leg_title.set_fontsize(20)
+    leg = ax.legend(fontsize=16, loc='best', frameon=False)
+    # leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
+    # leg_title = leg.get_title()
+    # leg_title.set_fontsize(20)
 
     # f.subplots_adjust(hspace=0.01)
     f.tight_layout()
@@ -795,7 +822,7 @@ def plot_super_grid(target_dir, dt):  # grid of plots of output power, dissipati
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    plot_ITQ_Ecouple(target_dir, 'learning_rate_3 ', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
+    plot_ITQ_Ecouple(target_dir, 'learning_rate_2', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy' and the last option is dt.
     # dt = 0.001 is the standard used in the simulations.
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
