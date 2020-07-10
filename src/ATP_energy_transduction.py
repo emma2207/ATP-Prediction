@@ -2,8 +2,10 @@ from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asar
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from utilities import step_probability_X, calc_flux, calc_derivative_pxgy, step_probability_Y
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
+
 
 N = 360  # N x N grid is used for Fokker-Planck simulations
 dx = 2 * math.pi / N  # spacing between gridpoints
@@ -1057,6 +1059,7 @@ def calc_heat_flow():
     phase_array = array([0.0])
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
+    dt = 5e-2
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1066,12 +1069,11 @@ def calc_heat_flow():
             integrate_power_Y = empty(phase_array.size)
             integrate_heat_X = empty(phase_array.size)
             integrate_heat_Y = empty(phase_array.size)
-            integrate_entropy_X = empty(phase_array.size)
-            integrate_entropy_Y = empty(phase_array.size)
-
+            learningrate_X = empty(phase_array.size)
+            learningrate_Y = empty(phase_array.size)
             for Ecouple in Ecouple_array:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 
@@ -1084,7 +1086,8 @@ def calc_heat_flow():
                                                                     num_minima2, phase_shift),
                                              usecols=(0, 2, 3, 4, 5, 6, 7, 8))
                         N = int(sqrt(len(data_array)))  # check grid size
-                        print('Grid size: ', N)
+                        dx = 2 * math.pi / N
+                        # print('Grid size: ', N)
 
                         prob_ss_array = data_array[:, 0].reshape((N, N))
                         potential_at_pos = data_array[:, 1].reshape((N, N))
@@ -1098,22 +1101,30 @@ def calc_heat_flow():
                         derivative_flux(flux_array, dflux_array, N)
                         dflux_array = asarray(dflux_array)
 
-                        integrate_flux_X[ii] = trapz(trapz(flux_array[0, ...]))
-                        integrate_flux_Y[ii] = trapz(trapz(flux_array[1, ...]))
+                        integrate_flux_X[ii] = trapz(trapz(flux_array[0, ...], dx=dx), dx=dx) * timescale
+                        integrate_flux_Y[ii] = trapz(trapz(flux_array[1, ...], dx=dx), dx=dx) * timescale
 
                         integrate_power_X[ii] = psi_1*integrate_flux_X[ii]
                         integrate_power_Y[ii] = psi_2*integrate_flux_Y[ii]
 
-                        integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos))
-                        integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos))
+                        integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
+                        integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
 
-                        print(dflux_array[0, ...])
+                        step_X = empty((N, N))
+                        step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
 
-                        print(dflux_array[1, ...])
+                        # instantaneous memory
+                        mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+                        Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
 
-                        integrate_entropy_X[ii] = trapz(trapz(dflux_array[0, ...] * log(prob_ss_array)))
-                        integrate_entropy_Y[ii] = trapz(trapz(dflux_array[1, ...] * log(prob_ss_array)))
+                        # instantaneous predictive power
+                        pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+                        Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
+                        learningrate_X[ii] = timescale * (Imem - Ipred) / dt
+                        learningrate_Y[ii] = -learningrate_X[ii]
+
+                        # print(integrate_power_X[ii] + integrate_power_Y[ii] + integrate_heat_X[ii] + integrate_heat_Y[ii])
                     except OSError:
                         print('Missing file')
                         print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2,
@@ -1127,15 +1138,67 @@ def calc_heat_flow():
                             + f"{integrate_power_Y[j]:.15e}" + "\t"
                             + f"{integrate_heat_X[j]:.15e}" + "\t"
                             + f"{integrate_heat_Y[j]:.15e}" + "\t"
-                            + f"{integrate_entropy_X[j]:.15e}" + "\t"
-                            + f"{integrate_entropy_Y[j]:.15e}" + "\n")
+                            + f"{learningrate_X[j]:.15e}" + "\t"
+                            + f"{learningrate_Y[j]:.15e}" + "\n")
                     ofile.flush()
+
+
+def plot_energy_flow():
+    phase_array = array([0.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
+
+    input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "heat_flow_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+    output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "Energy_flow_Ecouple_" +
+                       "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + ".pdf")
+
+    power_x = empty(Ecouple_array.size)
+    power_y = empty(Ecouple_array.size)
+    heat_x = empty(Ecouple_array.size)
+    heat_y = empty(Ecouple_array.size)
+    information_flow_x = empty(Ecouple_array.size)
+
+    for psi_1 in psi1_array:
+        for psi_2 in psi2_array:
+            for i, Ecouple in enumerate(Ecouple_array):
+                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+                power_x[i] = data_array[1]
+                power_y[i] = data_array[2]
+                heat_x[i] = data_array[3]
+                heat_y[i] = data_array[4]
+                information_flow_x[i] = data_array[5]
+
+            plt.figure()
+            f, ax = plt.subplots(1, 1)
+
+            ax.axhline(0, color='black')
+
+            ax.plot(Ecouple_array, power_x, '-o', label=r'$\beta P_{\rm H^+}$')
+            ax.plot(Ecouple_array, power_y, '-o', label=r'$\beta P_{\rm ATP}$')
+            ax.plot(Ecouple_array, heat_x, '-o', label=r'$\beta \dot{Q}_{\rm F_o}$')
+            ax.plot(Ecouple_array, heat_y, '-o', label=r'$\beta \dot{Q}_{\rm F_1}$')
+            # ax.plot(Ecouple_array, information_flow_x/50, '-o', label=r'$\dot{I}$')
+
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.set_xscale('log')
+            ax.set_xlabel(r'$E_{\rm couple}$', fontsize=14)
+            ax.set_ylabel(r'$\rm Energy\, flow (s^{-1})$', fontsize=14)
+            ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
+            ax.tick_params(axis='both', labelsize=14)
+            ax.yaxis.offsetText.set_fontsize(14)
+            ax.legend(fontsize=14, frameon=False)
+
+            f.tight_layout()
+            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
 
 
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "V_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     # Ecouple_array = array([2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0])
 
@@ -1144,7 +1207,7 @@ def plot_2D_prob():
 
     ##Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_phaseoffset" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     # try:
     #     data_array = loadtxt(
@@ -1162,7 +1225,8 @@ def plot_2D_prob():
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
                 usecols=(0, 2))
-            prob_ss_array = data_array[:, 0].reshape((N, N))
+            potential_at_pos = data_array[:, 1].reshape((N, N))
+            # prob_ss_array = data_array[:, 0].reshape((N, N))
             # integrate using axis=1 integrates out the y component, gives us P(x)
             # prob_ss_x = trapz(prob_ss_array, axis=1)
             # prob_ss_y = trapz(prob_ss_array, axis=0)
@@ -1170,7 +1234,7 @@ def plot_2D_prob():
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ax1[ii].contourf(prob_ss_array)
+        ax1[ii].contourf(potential_at_pos)
 
         if ii == 0:
             ax1[ii].set_title("$E_{couple}$" + "={}".format(Ecouple))
@@ -1267,7 +1331,7 @@ if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/"
     # flux_power_efficiency(target_dir)
     # plot_power_Ecouple(target_dir)
-    plot_power_efficiency_Ecouple(target_dir)
+    # plot_power_efficiency_Ecouple(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_power_efficiency_phi(target_dir)
     # plot_power_phi_single(target_dir)
@@ -1275,5 +1339,6 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
+    plot_energy_flow()
     # plot_2D_prob()
     # plot_marginal_prob()
