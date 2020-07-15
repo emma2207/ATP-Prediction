@@ -261,12 +261,7 @@ cdef void update_probability_x(
             ) 
 
         ## all points with well defined neighbours go like so:
-        for j in range(1, N-1):
-            p_now[i, j] = p_last[i, j] + dt*(
-                -(drift_at_pos[0, i+1, j]*p_last[i+1, j]-drift_at_pos[0, i-1, j]*p_last[i-1, j])/(2.0*dx)
-                +(diffusion_at_pos[0, i+1, j]*p_last[i+1, j]-2.0*diffusion_at_pos[0, i, j]*p_last[i, j]+diffusion_at_pos[0, i-1, j]*p_last[i-1, j])/(dx*dx)
-                +(diffusion_at_pos[1, i, j+1]*p_last[i, j+1]-2.0*diffusion_at_pos[1, i, j]*p_last[i, j]+diffusion_at_pos[1, i, j-1]*p_last[i, j-1])/(dx*dx)
-                ) 
+
 
         # Explicitly update FPE for rest of edges not corners
         p_now[N-1, i] = p_last[N-1, i] + dt*(

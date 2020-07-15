@@ -1,4 +1,4 @@
-from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax
+from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, cos, sin, amax
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -16,8 +16,8 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
-num_minima1 = 3.0  # number of barriers in Fo's landscape
-num_minima2 = 3.0  # number of barriers in F1's landscape
+num_minima1 = 12.0  # number of barriers in Fo's landscape
+num_minima2 = 12.0  # number of barriers in F1's landscape
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
@@ -166,6 +166,44 @@ def derivative_flux(flux_array, dflux_array, N):
             dflux_array[0, i, j] = (flux_array[0, i + 1, j] - flux_array[0, i - 1, j]) / (2.0 * dx)
             # second component
             dflux_array[1, i, j] = (flux_array[1, i, j + 1] - flux_array[1, i, j - 1]) / (2.0 * dx)
+
+
+def calc_derivative(flux_array, dflux_array, N, dx, k):
+    if k == 0:
+        # explicit update of the corners
+        dflux_array[0, 0] = (flux_array[1, 0] - flux_array[N - 1, 0]) / (2.0 * dx)
+        dflux_array[0, N - 1] = (flux_array[1, N - 1] - flux_array[N - 1, N - 1]) / (2.0 * dx)
+        dflux_array[N - 1, 0] = (flux_array[0, 0] - flux_array[N - 2, 0]) / (2.0 * dx)
+        dflux_array[N - 1, N - 1] = (flux_array[0, N - 1] - flux_array[N - 2, N - 1]) / (2.0 * dx)
+
+        for i in range(1, N - 1):
+            # explicitly update for edges not corners
+            dflux_array[0, i] = (flux_array[1, i] - flux_array[N - 1, i]) / (2.0 * dx)
+            dflux_array[i, 0] = (flux_array[i + 1, 0] - flux_array[i - 1, 0]) / (2.0 * dx)
+            dflux_array[N - 1, i] = (flux_array[0, i] - flux_array[N - 2, i]) / (2.0 * dx)
+            dflux_array[i, N - 1] = (flux_array[i + 1, N - 1] - flux_array[i - 1, N - 1]) / (2.0 * dx)
+
+            # for points with well defined neighbours
+            for j in range(1, N - 1):
+                dflux_array[i, j] = (flux_array[i + 1, j] - flux_array[i - 1, j]) / (2.0 * dx)
+
+    if k == 1:
+        dflux_array[0, 0] = (flux_array[0, 1] - flux_array[0, N - 1]) / (2.0 * dx)
+        dflux_array[0, N - 1] = (flux_array[0, 0] - flux_array[0, N - 2]) / (2.0 * dx)
+        dflux_array[N - 1, 0] = (flux_array[N - 1, 1] - flux_array[N - 1, N - 1]) / (2.0 * dx)
+        dflux_array[N - 1, N - 1] = (flux_array[N - 1, 0] - flux_array[N - 1, N - 2]) / (2.0 * dx)
+
+        for i in range(1, N - 1):
+            # explicitly update for edges not corners
+            dflux_array[0, i] = (flux_array[0, i + 1] - flux_array[0, i - 1]) / (2.0 * dx)
+            dflux_array[i, 0] = (flux_array[i, 1] - flux_array[i, N - 1]) / (2.0 * dx)
+            dflux_array[N - 1, i] = (flux_array[N - 1, i + 1] - flux_array[N - 1, i - 1]) / (2.0 * dx)
+            dflux_array[i, N - 1] = (flux_array[i, 0] - flux_array[i, N - 2]) / (2.0 * dx)
+
+            # for points with well defined neighbours
+            for j in range(1, N - 1):
+                # second component
+                dflux_array[i, j] = (flux_array[i, j + 1] - flux_array[i, j - 1]) / (2.0 * dx)
 
 
 def flux_power_efficiency(target_dir): # processing of raw data
@@ -1071,6 +1109,10 @@ def calc_heat_flow():
             integrate_heat_Y = empty(phase_array.size)
             learningrate_X = empty(phase_array.size)
             learningrate_Y = empty(phase_array.size)
+            integrate_Fo_flow = empty(phase_array.size)
+            integrate_F1_flow = empty(phase_array.size)
+            integrate_couple_X = empty(phase_array.size)
+            integrate_couple_Y = empty(phase_array.size)
             for Ecouple in Ecouple_array:
                 for ii, phase_shift in enumerate(phase_array):
                     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" +
@@ -1095,11 +1137,15 @@ def calc_heat_flow():
                         diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
 
                         flux_array = zeros((2, N, N))
-                        dflux_array = zeros((2, N, N))
+                        # dflux_array = zeros((2, N, N))
                         calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
                         flux_array = asarray(flux_array)
-                        derivative_flux(flux_array, dflux_array, N)
-                        dflux_array = asarray(dflux_array)
+                        # derivative_flux(flux_array, dflux_array, N)
+                        # dflux_array = asarray(dflux_array)
+                        dpotential_x = zeros((N, N))
+                        dpotential_y = zeros((N, N))
+                        calc_derivative(potential_at_pos, dpotential_x, N, dx, 0)
+                        calc_derivative(potential_at_pos, dpotential_y, N, dx, 1)
 
                         integrate_flux_X[ii] = trapz(trapz(flux_array[0, ...], dx=dx), dx=dx) * timescale
                         integrate_flux_Y[ii] = trapz(trapz(flux_array[1, ...], dx=dx), dx=dx) * timescale
@@ -1107,22 +1153,38 @@ def calc_heat_flow():
                         integrate_power_X[ii] = psi_1*integrate_flux_X[ii]
                         integrate_power_Y[ii] = psi_2*integrate_flux_Y[ii]
 
-                        integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
-                        integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
+                        # integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
+                        # integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
+                        integrate_heat_X[ii] = trapz(trapz(flux_array[0, ...] * dpotential_x, dx=dx), dx=dx) * timescale
+                        integrate_heat_Y[ii] = trapz(trapz(flux_array[1, ...] * dpotential_y, dx=dx), dx=dx) * timescale
 
-                        step_X = empty((N, N))
-                        step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+                        force_Fo = zeros((N, N))
+                        force_F1 = zeros((N, N))
+                        force_FoF1 = zeros((N, N))
+                        for i in range(N):
+                            force_Fo[i, :] = -1.5 * E0 * sin(num_minima1 * (positions[i] - phase_shift))
+                            force_F1[:, i] = -1.5 * E1 * sin(num_minima2 * positions[i])
+                            for j in range(N):
+                                force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
 
-                        # instantaneous memory
-                        mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
-                        Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+                        integrate_Fo_flow[ii] = trapz(trapz(flux_array[0, ...] * force_Fo, dx=dx), dx=dx) * timescale
+                        integrate_F1_flow[ii] = trapz(trapz(flux_array[1, ...] * force_F1, dx=dx), dx=dx) * timescale
+                        integrate_couple_X[ii] = trapz(trapz(flux_array[0, ...] * force_FoF1, dx=dx), dx=dx) * timescale
+                        integrate_couple_Y[ii] = trapz(trapz(flux_array[1, ...] * (-force_FoF1), dx=dx), dx=dx) * timescale
 
-                        # instantaneous predictive power
-                        pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
-                        Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
-
-                        learningrate_X[ii] = timescale * (Imem - Ipred) / dt
-                        learningrate_Y[ii] = -learningrate_X[ii]
+                        # step_X = empty((N, N))
+                        # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+                        #
+                        # # instantaneous memory
+                        # mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+                        # Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+                        #
+                        # # instantaneous predictive power
+                        # pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+                        # Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+                        #
+                        # learningrate_X[ii] = timescale * (Imem - Ipred) / dt
+                        # learningrate_Y[ii] = -learningrate_X[ii]
 
                         # print(integrate_power_X[ii] + integrate_power_Y[ii] + integrate_heat_X[ii] + integrate_heat_Y[ii])
                     except OSError:
@@ -1138,8 +1200,11 @@ def calc_heat_flow():
                             + f"{integrate_power_Y[j]:.15e}" + "\t"
                             + f"{integrate_heat_X[j]:.15e}" + "\t"
                             + f"{integrate_heat_Y[j]:.15e}" + "\t"
-                            + f"{learningrate_X[j]:.15e}" + "\t"
-                            + f"{learningrate_Y[j]:.15e}" + "\n")
+                            + f"{integrate_Fo_flow[j]:.15e}" + "\t"
+                            + f"{integrate_F1_flow[j]:.15e}" + "\t"
+                            + f"{integrate_couple_X[j]:.15e}" + "\t"
+                            + f"{integrate_couple_Y[j]:.15e}" + "\n"
+                        )
                     ofile.flush()
 
 
@@ -1157,7 +1222,11 @@ def plot_energy_flow():
     power_y = empty(Ecouple_array.size)
     heat_x = empty(Ecouple_array.size)
     heat_y = empty(Ecouple_array.size)
-    information_flow_x = empty(Ecouple_array.size)
+    # information_flow_x = empty(Ecouple_array.size)
+    flow_x = empty(Ecouple_array.size)
+    flow_y = empty(Ecouple_array.size)
+    couple_x = empty(Ecouple_array.size)
+    couple_y = empty(Ecouple_array.size)
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1167,7 +1236,11 @@ def plot_energy_flow():
                 power_y[i] = data_array[2]
                 heat_x[i] = data_array[3]
                 heat_y[i] = data_array[4]
-                information_flow_x[i] = data_array[5]
+                flow_x[i] = data_array[5]
+                flow_y[i] = data_array[6]
+                couple_x[i] = data_array[7]
+                couple_y[i] = data_array[8]
+                # information_flow_x[i] = data_array[5]
 
             plt.figure()
             f, ax = plt.subplots(1, 1)
@@ -1178,6 +1251,11 @@ def plot_energy_flow():
             ax.plot(Ecouple_array, power_y, '-o', label=r'$\beta P_{\rm ATP}$')
             ax.plot(Ecouple_array, heat_x, '-o', label=r'$\beta \dot{Q}_{\rm F_o}$')
             ax.plot(Ecouple_array, heat_y, '-o', label=r'$\beta \dot{Q}_{\rm F_1}$')
+            ax.plot(Ecouple_array, flow_x, '-o', label=r'$F_{Fo}$')
+            ax.plot(Ecouple_array, flow_y, '-o', label=r'$F_{F1}$')
+            ax.plot(Ecouple_array, couple_x, '-o', label=r'$F_{FoF1}$')
+            ax.plot(Ecouple_array, couple_y, '-o', label=r'$-F_{FoF1}$')
+
             # ax.plot(Ecouple_array, information_flow_x/50, '-o', label=r'$\dot{I}$')
 
             ax.spines['right'].set_visible(False)
@@ -1198,35 +1276,35 @@ def plot_energy_flow():
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "V_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pss_scaled_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     # Ecouple_array = array([2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(18, 3), sharey='all')
 
-    ##Find max prob. to set plot range
+    # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/n12" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
-    # try:
-    #     data_array = loadtxt(
-    #         input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
-    #     prob_ss_array = data_array.reshape((N, N))
-    # except OSError:
-    #     print('Missing file')
-    #     print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+    try:
+        data_array = loadtxt(
+            input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
+        prob_ss_array = data_array.reshape((N, N))
+    except OSError:
+        print('Missing file')
+        print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-    # prob_max = amax(prob_ss_array)
+    prob_max = amax(prob_ss_array)
 
-    ##plots
+    # plots
     for ii, Ecouple in enumerate(Ecouple_array):
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
                 usecols=(0, 2))
             potential_at_pos = data_array[:, 1].reshape((N, N))
-            # prob_ss_array = data_array[:, 0].reshape((N, N))
+            prob_ss_array = data_array[:, 0].reshape((N, N))
             # integrate using axis=1 integrates out the y component, gives us P(x)
             # prob_ss_x = trapz(prob_ss_array, axis=1)
             # prob_ss_y = trapz(prob_ss_array, axis=0)
@@ -1234,7 +1312,7 @@ def plot_2D_prob():
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ax1[ii].contourf(potential_at_pos)
+        ax1[ii].contourf(prob_ss_array, vmax=prob_max)
 
         if ii == 0:
             ax1[ii].set_title("$E_{couple}$" + "={}".format(Ecouple))
@@ -1339,6 +1417,6 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    plot_energy_flow()
-    # plot_2D_prob()
+    # plot_energy_flow()
+    plot_2D_prob()
     # plot_marginal_prob()
