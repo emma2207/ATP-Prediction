@@ -16,8 +16,8 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
-num_minima1 = 12.0  # number of barriers in Fo's landscape
-num_minima2 = 12.0  # number of barriers in F1's landscape
+num_minima1 = 3.0  # number of barriers in Fo's landscape
+num_minima2 = 3.0  # number of barriers in F1's landscape
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
@@ -1107,6 +1107,8 @@ def calc_heat_flow():
             integrate_power_Y = empty(phase_array.size)
             integrate_heat_X = empty(phase_array.size)
             integrate_heat_Y = empty(phase_array.size)
+            integrate_heat_X2 = empty(phase_array.size)
+            integrate_heat_Y2 = empty(phase_array.size)
             learningrate_X = empty(phase_array.size)
             learningrate_Y = empty(phase_array.size)
             integrate_Fo_flow = empty(phase_array.size)
@@ -1153,10 +1155,28 @@ def calc_heat_flow():
                         integrate_power_X[ii] = psi_1*integrate_flux_X[ii]
                         integrate_power_Y[ii] = psi_2*integrate_flux_Y[ii]
 
-                        # integrate_heat_X[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
-                        # integrate_heat_Y[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
+                        # integrate_heat_X2[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
+                        # integrate_heat_Y2[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
                         integrate_heat_X[ii] = trapz(trapz(flux_array[0, ...] * dpotential_x, dx=dx), dx=dx) * timescale
                         integrate_heat_Y[ii] = trapz(trapz(flux_array[1, ...] * dpotential_y, dx=dx), dx=dx) * timescale
+
+                        # dpot_x = zeros((N, N))
+                        # dpot_y = zeros((N, N))
+                        # dpot_x2 = zeros((N, N))
+                        # dpot_y2 = zeros((N, N))
+                        # for i in range(N):
+                        #     for j in range(N):
+                        #         dpot_x[i, j] = 0.5 * Ecouple * sin(positions[i] - positions[j]) \
+                        #                        + 1.5 * E0 * sin(num_minima1 * (positions[i] - phase_shift))
+                        #         dpot_y[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j]) \
+                        #                        + 1.5 * E1 * sin(num_minima2 * positions[j])
+                        #         dpot_x2[i, j] = 0.5 * Ecouple * cos(positions[i] - positions[j]) \
+                        #                         + 4.5 * E0 * cos(num_minima1 * (positions[i] - phase_shift))
+                        #         dpot_y2[i, j] = 0.5 * Ecouple * cos(positions[i] - positions[j]) \
+                        #                         + 4.5 * E1 * cos(num_minima2 * positions[j])
+
+                        # integrate_heat_X2[ii] = trapz(trapz(prob_ss_array * (dpot_x2 - dpot_x**2), dx=dx), dx=dx)
+                        # integrate_heat_Y2[ii] = trapz(trapz(prob_ss_array * (dpot_y2 - dpot_y**2), dx=dx), dx=dx)
 
                         force_Fo = zeros((N, N))
                         force_F1 = zeros((N, N))
@@ -1215,13 +1235,15 @@ def plot_energy_flow():
 
     input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "heat_flow_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "Energy_flow_Ecouple_" +
+    output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "Energy_flow_all_new_Ecouple_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + ".pdf")
 
     power_x = empty(Ecouple_array.size)
     power_y = empty(Ecouple_array.size)
     heat_x = empty(Ecouple_array.size)
     heat_y = empty(Ecouple_array.size)
+    heat_x2 = empty(Ecouple_array.size)
+    heat_y2 = empty(Ecouple_array.size)
     # information_flow_x = empty(Ecouple_array.size)
     flow_x = empty(Ecouple_array.size)
     flow_y = empty(Ecouple_array.size)
@@ -1249,12 +1271,12 @@ def plot_energy_flow():
 
             ax.plot(Ecouple_array, power_x, '-o', label=r'$\beta P_{\rm H^+}$')
             ax.plot(Ecouple_array, power_y, '-o', label=r'$\beta P_{\rm ATP}$')
-            ax.plot(Ecouple_array, heat_x, '-o', label=r'$\beta \dot{Q}_{\rm F_o}$')
-            ax.plot(Ecouple_array, heat_y, '-o', label=r'$\beta \dot{Q}_{\rm F_1}$')
-            ax.plot(Ecouple_array, flow_x, '-o', label=r'$F_{Fo}$')
-            ax.plot(Ecouple_array, flow_y, '-o', label=r'$F_{F1}$')
-            ax.plot(Ecouple_array, couple_x, '-o', label=r'$F_{FoF1}$')
-            ax.plot(Ecouple_array, couple_y, '-o', label=r'$-F_{FoF1}$')
+            ax.plot(Ecouple_array, -flow_x - couple_x - power_x, '-o', label=r'$\beta \dot{Q}_{\rm F_o}$')
+            ax.plot(Ecouple_array, -flow_y - couple_y - power_y, '-o', label=r'$\beta \dot{Q}_{\rm F_1}$')
+            # ax.plot(Ecouple_array, flow_x + couple_x, '-o', label=r'$F_{Fo}$')
+            # ax.plot(Ecouple_array, flow_y + couple_y, '-o', label=r'$F_{F1}$')
+            ax.plot(Ecouple_array, couple_x, '-o', label=r'$\dot{E}_{F1 \to Fo}$')
+            ax.plot(Ecouple_array, couple_y, '-o', label=r'$\dot{E}_{Fo \to F1}$')
 
             # ax.plot(Ecouple_array, information_flow_x/50, '-o', label=r'$\dot{I}$')
 
@@ -1267,7 +1289,7 @@ def plot_energy_flow():
             ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
             ax.tick_params(axis='both', labelsize=14)
             ax.yaxis.offsetText.set_fontsize(14)
-            ax.legend(fontsize=14, frameon=False)
+            ax.legend(fontsize=14, frameon=False, ncol=3)
 
             f.tight_layout()
             f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -1285,7 +1307,7 @@ def plot_2D_prob():
 
     # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/n12" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     try:
         data_array = loadtxt(
@@ -1417,6 +1439,6 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    # plot_energy_flow()
-    plot_2D_prob()
+    plot_energy_flow()
+    # plot_2D_prob()
     # plot_marginal_prob()
