@@ -3,7 +3,7 @@ from math import pi
 from numpy import finfo, asarray, empty, zeros, linspace
 from datetime import datetime
 
-from fpe import launchpad_reference
+from fpe import launchpad_reference, launchpad_bipartite_reference
 
 
 def get_params():
@@ -12,7 +12,7 @@ def get_params():
 
     # discretization parameters
     dt = 0.001  # time discretization. Keep this number low
-    N = 540  # inverse space discretization. Keep this number high!
+    N = 360  # inverse space discretization. Keep this number high!
 
     # model constants
     beta = 1.0  # thermodynamic beta: 1/kT
@@ -22,10 +22,10 @@ def get_params():
     gamma1 = gamma2 = 1000.0  # drag coefficients of Fo and F1
 
     E0 = 2.0 # energy scale of Fo
-    Ecouple = 1.0 # energy scale of coupling between Fo and F1
+    Ecouple = 16.0 # energy scale of coupling between Fo and F1
     E1 = 2.0 # energy scale of F1
     mu_Hp = 4.0 #  mu_{H+}: energy INTO (positive) Fo by F1
-    mu_atp = 2.0 # mu_{ATP}: energy INTO (positive) F1 by Fo
+    mu_atp = -2.0 # mu_{ATP}: energy INTO (positive) F1 by Fo
 
     n1 = 3.0  # number of minima in the potential of Fo
     n2 = 3.0  # number of minima in the potential of F1
@@ -111,6 +111,8 @@ def main():
     p_now = zeros((N, N))
     p_last = zeros((N, N))
     p_last_ref = zeros((N, N))
+    p_update_x = zeros((N, N))
+    p_update_y = zeros((N, N))
     positions = linspace(0, (2*pi)-dx, N)
     potential_at_pos = zeros((N, N))
     drift_at_pos = zeros((2, N, N))
@@ -126,6 +128,7 @@ def main():
         positions,
         prob, p_now,
         p_last, p_last_ref,
+        p_update_x, p_update_y,
         potential_at_pos,
         drift_at_pos,
         diffusion_at_pos,
@@ -133,6 +136,7 @@ def main():
         E0, Ecouple, E1, mu_Hp, mu_atp,
         dt, m1, m2, beta, gamma1, gamma2
     )
+
     print(
         f"{datetime.now().strftime('[%Y-%m-%d %H:%M:%S]')} "
         + "FPE simulation done!"
