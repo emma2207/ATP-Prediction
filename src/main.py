@@ -3,7 +3,7 @@ from math import pi
 from numpy import finfo, asarray, empty, zeros, linspace
 from datetime import datetime
 
-from fpe import launchpad_reference, launchpad_bipartite_reference
+from fpe import launchpad_reference
 
 
 def get_params():
@@ -21,11 +21,11 @@ def get_params():
     # model-specific parameters
     gamma1 = gamma2 = 1000.0  # drag coefficients of Fo and F1
 
-    E0 = 2.0 # energy scale of Fo
-    Ecouple = 16.0 # energy scale of coupling between Fo and F1
-    E1 = 2.0 # energy scale of F1
-    mu_Hp = 4.0 #  mu_{H+}: energy INTO (positive) Fo by F1
-    mu_atp = -2.0 # mu_{ATP}: energy INTO (positive) F1 by Fo
+    E0 = 3.0  # energy scale of Fo
+    Ecouple = 3.0  # energy scale of coupling between Fo and F1
+    E1 = 3.0  # energy scale of F1
+    mu_Hp = 3.0  # mu_{H+}: energy INTO (positive) Fo by F1
+    mu_atp = 3.0  # mu_{ATP}: energy INTO (positive) F1 by Fo
 
     n1 = 3.0  # number of minima in the potential of Fo
     n2 = 3.0  # number of minima in the potential of F1
