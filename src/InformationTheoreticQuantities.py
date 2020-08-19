@@ -1,4 +1,4 @@
-from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, tile, cos
+from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, tile, cos, ones
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -285,6 +285,7 @@ def plot_learning_rates_Ecouple(target_dir, dt):
     information = zeros(Ecouple_array_tot.size)
     information2 = zeros((4, Ecouple_array_tot.size))
     information3 = zeros(Ecouple_array_tot.size)
+    information4 = zeros(Ecouple_array_tot.size)
 
     for ii, Ecouple in enumerate(Ecouple_array_tot):
         if Ecouple in Ecouple_array:
@@ -364,16 +365,23 @@ def plot_learning_rates_Ecouple(target_dir, dt):
                 denergy[i, j] = - 0.5 * Ecouple * sin(positions[i] - positions[j])
         dP = empty((N, N))
         calc_derivative(prob_ss_array, dP, N, dx, 1)
-        dPy = empty((N, N))
-        calc_marg_derivative(prob_ss_array.sum(axis=0), dPy, N, dx)
+        dPy = empty((N, 1))
+        calc_marg_derivative(prob_ss_array.sum(axis=0).reshape((N, 1)), dPy, N, dx)
 
-        learning = prob_ss_array * (denergy + dP/prob_ss_array) * ((dPy/prob_ss_array.sum(axis=0))[None, :] - dP/prob_ss_array)
+        learning = denergy * (prob_ss_array * (dPy / prob_ss_array.sum(axis=0).reshape((N, 1))) - dP)
 
-        information3[ii] = trapz(trapz(learning, dx=1), dx=1)
+        information3[ii] = trapz(trapz(learning, dx=1), dx=1) * 10**(-3) * timescale
+
+        print((dPy / prob_ss_array.sum(axis=0).reshape((N, 1))).shape)
+
+        learning = dP * (dPy / prob_ss_array.sum(axis=0).reshape((N, 1)) - dP / prob_ss_array)
+        information4[ii] = trapz(trapz(learning, dx=1), dx=1) * 10**(-3) * timescale
 
     ax.plot(Ecouple_array_tot, information, 'o', color='C0', markersize=8, label='Basic')
     ax.plot(Ecouple_array_tot, information2[0] + information2[1], 'o', color='C1', markersize=8, label='Entropy based')
-    ax.plot(Ecouple_array_tot, information3, 'o', color='C2', markersize=8, label='Interaction Hamiltonian')
+    ax.plot(Ecouple_array_tot, information3, 'o', color='C2', markersize=8, label='Interaction Hamiltonian p.1')
+    ax.plot(Ecouple_array_tot, information4, 'o', color='C3', markersize=8, label='Interaction Hamiltonian p.2')
+    ax.plot(Ecouple_array_tot, information4 + information3, 'o', color='C4', markersize=8, label='Interaction Hamiltonian')
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)

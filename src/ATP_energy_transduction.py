@@ -1345,10 +1345,10 @@ def plot_energy_flow():
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Flux_Fo_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    # Ecouple_array = array([2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0])
-    Ecouple_array = array([8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 64.0])
+    Ecouple_array = array([2.0, 4.0, 8.0, 12.0, 16.0, 32.0, 128.0])
+    # Ecouple_array = array([8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 64.0])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(18, 3))
@@ -1370,7 +1370,7 @@ def plot_2D_prob():
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
-        if Ecouple in [8.0, 16.0, 64.0] and num_minima1 == 3.0:
+        if Ecouple in [2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0] and num_minima1 == 3.0:
             input_file_name = (
                     "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
                     "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
@@ -1393,10 +1393,12 @@ def plot_2D_prob():
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
-                usecols=(0, 2))
+                usecols=(0, 2, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array[:, 0])))  # check grid size
             potential_at_pos = data_array[:, 1].reshape((N, N))
             prob_ss_array = data_array[:, 0].reshape((N, N))
+            drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
             # integrate using axis=1 integrates out the y component, gives us P(x)
             # prob_ss_x = trapz(prob_ss_array, axis=1)
             # prob_ss_y = trapz(prob_ss_array, axis=0)
@@ -1404,7 +1406,18 @@ def plot_2D_prob():
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ax1[ii].contourf(prob_ss_array, vmax=None)
+        flux_array = zeros((2, N, N))
+        calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
+        flux_array = asarray(flux_array) / (dx * dx)
+
+        # force_FoF1 = zeros((N, N))
+        # force_Fo = zeros((N, N))
+        # for i in range(N):
+        #     force_Fo[i, :] = -1.5 * E0 * sin(3*positions[i])
+        #     for j in range(N):
+        #         force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
+
+        ax1[ii].contourf(flux_array[0, ...], vmax=None)
 
         if ii == 0:
             ax1[ii].set_title("$E_{couple}$" + "={}".format(Ecouple))
@@ -1430,7 +1443,7 @@ def plot_2D_prob():
 def plot_marginal_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_F1_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Flux_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(18, 3), sharey='all')
@@ -1444,12 +1457,14 @@ def plot_marginal_prob():
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
-                usecols=(0, 2))
+                usecols=(0, 2, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array)))  # check grid size
             print(N)
             dx = 2 * math.pi / N
             positions = linspace(0, 2 * math.pi - dx, N)
             prob_ss_array = data_array[:, 0].reshape((N, N))
+            drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
             # integrate using axis=1 integrates out the y component, gives us P(x)
             prob_ss_x = trapz(prob_ss_array, axis=1, dx=1/dx)
             prob_ss_y = trapz(prob_ss_array, axis=0, dx=1/dx)
@@ -1457,30 +1472,34 @@ def plot_marginal_prob():
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ax1[ii].plot(positions, prob_ss_y)
+        flux_array = zeros((2, N, N))
+        calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
+        flux_array = asarray(flux_array) / (dx * dx)
 
-        input_file_name = (
-                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200810_bipartite" +
-                "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        ax1[ii].plot(positions, flux_array[0, ...].sum(axis=1))
 
-        try:
-            data_array = loadtxt(
-                input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
-                usecols=(0, 2))
-            N = int(sqrt(len(data_array)))  # check grid size
-            print(N)
-            dx = 2 * math.pi / N
-            positions = linspace(0, 2 * math.pi - dx, N)
+        # input_file_name = (
+        #         "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200810_bipartite" +
+        #         "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        #
+        # try:
+        #     data_array = loadtxt(
+        #         input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
+        #         usecols=(0, 2))
+        #     N = int(sqrt(len(data_array)))  # check grid size
+        #     print(N)
+        #     dx = 2 * math.pi / N
+        #     positions = linspace(0, 2 * math.pi - dx, N)
+        #
+        #     prob_ss_array = data_array[:, 0].reshape((N, N))
+        #     # integrate using axis=1 integrates out the y component, gives us P(x)
+        #     prob_ss_x = trapz(prob_ss_array, axis=1, dx=1/dx)
+        #     prob_ss_y = trapz(prob_ss_array, axis=0, dx=1/dx)
+        # except OSError:
+        #     print('Missing file')
+        #     print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-            prob_ss_array = data_array[:, 0].reshape((N, N))
-            # integrate using axis=1 integrates out the y component, gives us P(x)
-            prob_ss_x = trapz(prob_ss_array, axis=1, dx=1/dx)
-            prob_ss_y = trapz(prob_ss_array, axis=0, dx=1/dx)
-        except OSError:
-            print('Missing file')
-            print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
-
-        ax1[ii].plot(positions, prob_ss_y, '--')
+        ax1[ii].plot(positions, flux_array[0, ...].sum(axis=0), '--')
 
         if ii == 0:
             ax1[ii].set_title("$E_{couple}$" + "={}".format(Ecouple))
