@@ -22,7 +22,7 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
-Ecouple_array_total = array([0.0, 1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0,
+Ecouple_array_total = array([1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0,
                              22.63, 24.0, 32.0, 45.25, 64.0, 90.51, 128.0])
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
@@ -1137,14 +1137,12 @@ def calc_heat_flow():
             integrate_power_Y = empty(phase_array.size)
             integrate_heat_X = empty(phase_array.size)
             integrate_heat_Y = empty(phase_array.size)
-            integrate_entropy_X = empty(phase_array.size)
-            integrate_entropy_Y = empty(phase_array.size)
-            learningrate_X = empty(phase_array.size)
-            learningrate_Y = empty(phase_array.size)
-            integrate_Fo_flow = empty(phase_array.size)
-            integrate_F1_flow = empty(phase_array.size)
+            integrate_energy_X = empty(phase_array.size)
+            integrate_energy_Y = empty(phase_array.size)
             integrate_couple_X = empty(phase_array.size)
             integrate_couple_Y = empty(phase_array.size)
+            integrate_entropy_X = empty(phase_array.size)
+            integrate_entropy_Y = empty(phase_array.size)
             integrate_entropy = empty(phase_array.size)
             integrate_shannon = empty(phase_array.size)
             for Ecouple in Ecouple_array_total:
@@ -1196,10 +1194,11 @@ def calc_heat_flow():
                         integrate_power_X[ii] = psi_1*integrate_flux_X[ii]
                         integrate_power_Y[ii] = psi_2*integrate_flux_Y[ii]
 
-                        # integrate_heat_X2[ii] = -trapz(trapz(dflux_array[0, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
-                        # integrate_heat_Y2[ii] = -trapz(trapz(dflux_array[1, ...] * potential_at_pos, dx=dx), dx=dx) * timescale
-                        integrate_heat_X[ii] = trapz(trapz(flux_array[0, ...] * dpotential_x, dx=dx), dx=dx) * timescale
-                        integrate_heat_Y[ii] = trapz(trapz(flux_array[1, ...] * dpotential_y, dx=dx), dx=dx) * timescale
+                        integrate_energy_X[ii] = trapz(trapz(flux_array[0, ...] * dpotential_x, dx=dx), dx=dx) * timescale
+                        integrate_energy_Y[ii] = trapz(trapz(flux_array[1, ...] * dpotential_y, dx=dx), dx=dx) * timescale
+
+                        integrate_heat_X[ii] = - integrate_power_X[ii] + integrate_energy_X[ii]
+                        integrate_heat_Y[ii] = - integrate_power_Y[ii] + integrate_energy_Y[ii]
 
                         integrate_entropy_X[ii] = 10**3 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array, dx=dx), dx=dx) * timescale
                         integrate_entropy_Y[ii] = 10**3 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array, dx=dx), dx=dx) * timescale
@@ -1216,35 +1215,14 @@ def calc_heat_flow():
                         integrate_entropy[ii] = integrate_shannon[ii] + integrate_heat_X[ii] + integrate_heat_Y[ii] - \
                                                 integrate_power_X[ii] - integrate_power_Y[ii]
 
-                        force_Fo = zeros((N, N))
-                        force_F1 = zeros((N, N))
                         force_FoF1 = zeros((N, N))
                         for i in range(N):
-                            force_Fo[i, :] = -1.5 * E0 * sin(num_minima1 * (positions[i] - phase_shift))
-                            force_F1[:, i] = -1.5 * E1 * sin(num_minima2 * positions[i])
                             for j in range(N):
                                 force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
 
-                        integrate_Fo_flow[ii] = trapz(trapz(flux_array[0, ...] * force_Fo, dx=dx), dx=dx) * timescale
-                        integrate_F1_flow[ii] = trapz(trapz(flux_array[1, ...] * force_F1, dx=dx), dx=dx) * timescale
                         integrate_couple_X[ii] = trapz(trapz(flux_array[0, ...] * force_FoF1, dx=dx), dx=dx) * timescale
                         integrate_couple_Y[ii] = trapz(trapz(flux_array[1, ...] * (-force_FoF1), dx=dx), dx=dx) * timescale
 
-                        # step_X = empty((N, N))
-                        # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
-                        #
-                        # # instantaneous memory
-                        # mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
-                        # Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
-                        #
-                        # # instantaneous predictive power
-                        # pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
-                        # Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
-                        #
-                        # learningrate_X[ii] = timescale * (Imem - Ipred) / dt
-                        # learningrate_Y[ii] = -learningrate_X[ii]
-
-                        # print(integrate_power_X[ii] + integrate_power_Y[ii] + integrate_heat_X[ii] + integrate_heat_Y[ii])
                     except OSError:
                         print('Missing file')
                         print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2,
@@ -1258,8 +1236,6 @@ def calc_heat_flow():
                             + f"{integrate_power_Y[j]:.15e}" + "\t"
                             + f"{integrate_heat_X[j]:.15e}" + "\t"
                             + f"{integrate_heat_Y[j]:.15e}" + "\t"
-                            + f"{integrate_Fo_flow[j]:.15e}" + "\t"
-                            + f"{integrate_F1_flow[j]:.15e}" + "\t"
                             + f"{integrate_couple_X[j]:.15e}" + "\t"
                             + f"{integrate_couple_Y[j]:.15e}" + "\t"
                             + f"{integrate_entropy_X[j]:.15e}" + "\t"
@@ -1276,7 +1252,7 @@ def plot_energy_flow():
 
     input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "heat_flow_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "Entropy_production_lin_Ecouple_" +
+    output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/" + "results/" + "Energy_flow_Ecouple_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + ".pdf")
 
     power_x = empty(Ecouple_array_total.size)
@@ -1285,9 +1261,6 @@ def plot_energy_flow():
     heat_y = empty(Ecouple_array_total.size)
     entropy_x = empty(Ecouple_array_total.size)
     entropy_y = empty(Ecouple_array_total.size)
-    # information_flow_x = empty(Ecouple_array_total.size)
-    flow_x = empty(Ecouple_array_total.size)
-    flow_y = empty(Ecouple_array_total.size)
     couple_x = empty(Ecouple_array_total.size)
     couple_y = empty(Ecouple_array_total.size)
     entropy = empty(Ecouple_array_total.size)
@@ -1300,43 +1273,40 @@ def plot_energy_flow():
                 power_y[i] = data_array[2]
                 heat_x[i] = data_array[3]
                 heat_y[i] = data_array[4]
-                flow_x[i] = data_array[5]
-                flow_y[i] = data_array[6]
-                couple_x[i] = data_array[7]
-                couple_y[i] = data_array[8]
-                entropy_x[i] = data_array[9]
-                entropy_y[i] = data_array[10]
-                entropy[i] = data_array[11]
-                # information_flow_x[i] = data_array[5]
+                couple_x[i] = data_array[5]
+                couple_y[i] = data_array[6]
+                entropy_x[i] = data_array[7]
+                entropy_y[i] = data_array[8]
+                entropy[i] = data_array[9]
 
             plt.figure()
             f, ax = plt.subplots(1, 1)
 
             ax.axhline(0, color='black')
 
-            # ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta P_{\rm H^+}$')
-            # ax.plot(Ecouple_array_total, power_y, '-o', label=r'$\beta P_{\rm ATP}$')
-            # ax.plot(Ecouple_array_total, -flow_x - couple_x - power_x, '-o', label=r'$\beta \dot{Q}_{\rm F_o}$')
-            # ax.plot(Ecouple_array_total, -flow_y - couple_y - power_y, '-o', label=r'$\beta \dot{Q}_{\rm F_1}$')
-            # ax.plot(Ecouple_array_total, flow_x + couple_x, '-o', label=r'$\beta \dot{E}_{F1 \to Fo}$')
-            # ax.plot(Ecouple_array_total, flow_y + couple_y, '-o', label=r'$\beta \dot{E}_{Fo \to F1}$')
-            ax.plot(Ecouple_array_total, entropy_x, '-o', label=r'$\dot{S}_i^o$')
-            ax.plot(Ecouple_array_total, entropy_y, '-o', label=r'$\dot{S}_i^1$')
-            ax.plot(Ecouple_array_total, -entropy, '-o', label=r'$\dot{S}_i$')
-            ax.set_xlim((0, 33))
+            ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta P_{\rm H^+}$')
+            ax.plot(Ecouple_array_total, power_y, '-o', label=r'$\beta P_{\rm ATP}$')
+            ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\beta \dot{Q}_{\rm F_o}$')
+            ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\beta \dot{Q}_{\rm F_1}$')
+            ax.plot(Ecouple_array_total, couple_x, '-o', label=r'$\beta \dot{E}_{F1 \to Fo}$')
+            ax.plot(Ecouple_array_total, couple_y, '-o', label=r'$\beta \dot{E}_{Fo \to F1}$')
+            # ax.plot(Ecouple_array_total, entropy_x, '-o', label=r'$\dot{S}_i^o$')
+            # ax.plot(Ecouple_array_total, entropy_y, '-o', label=r'$\dot{S}_i^1$')
+            # ax.plot(Ecouple_array_total, -entropy, '-o', label=r'$\dot{S}_i$')
+            # ax.set_xlim((0, 33))
 
             # ax.plot(Ecouple_array, information_flow_x/50, '-o', label=r'$\dot{I}$')
 
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.spines['bottom'].set_visible(False)
-            # ax.set_xscale('log')
+            ax.set_xscale('log')
             ax.set_xlabel(r'$E_{\rm couple}$', fontsize=14)
-            ax.set_ylabel(r'$\rm Entropy\, production\, (s^{-1})$', fontsize=14)
+            ax.set_ylabel(r'$\rm Energy\, flow\, (s^{-1})$', fontsize=14)
             ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
             ax.tick_params(axis='both', labelsize=14)
             ax.yaxis.offsetText.set_fontsize(14)
-            ax.legend(fontsize=12, frameon=False, ncol=2)
+            ax.legend(fontsize=12, frameon=False, ncol=3)
 
             f.tight_layout()
             f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -1529,6 +1499,6 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    # plot_energy_flow()
+    plot_energy_flow()
     # plot_2D_prob()
-    plot_marginal_prob()
+    # plot_marginal_prob()
