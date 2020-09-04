@@ -28,7 +28,7 @@ min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barrie
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 
 
-def calc_flux(p_now, drift_at_pos, diffusion_at_pos, flux_array, N):
+def calc_flux_2(p_now, drift_at_pos, diffusion_at_pos, flux_array, N, dx):
     # explicit update of the corners
     # first component
     flux_array[0, 0, 0] = (
@@ -136,7 +136,7 @@ def calc_flux(p_now, drift_at_pos, diffusion_at_pos, flux_array, N):
                 )
 
 
-def derivative_flux(flux_array, dflux_array, N):
+def derivative_flux(flux_array, dflux_array, N, dx):
     # explicit update of the corners
     # first component
     dflux_array[0, 0, 0] = (flux_array[0, 1, 0] - flux_array[0, N - 1, 0]) / (2.0 * dx)

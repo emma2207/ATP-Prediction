@@ -5,7 +5,7 @@
 # ============== INTERFACES
 # ==============
 # ============================================================================
-def calc_flux(
+def calc_flux_2(
     double[:] positions, 
     double[:, :] p_now,
     double[:, :, :] drift_at_pos, 
