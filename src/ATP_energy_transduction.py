@@ -1314,32 +1314,36 @@ def plot_energy_flow():
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Flux_Fo_2D_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pss_2D_scaled_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    Ecouple_array = array([2.0, 4.0, 8.0, 12.0, 16.0, 32.0, 128.0])
+    Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 64.0])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(18, 3))
 
     # Find max prob. to set plot range
-    # input_file_name = (
-    #         "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
-    #         "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
-    # try:
-    #     data_array = loadtxt(
-    #         input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
-    #     N = int(sqrt(len(data_array)))
-    #     prob_ss_array = data_array.reshape((N, N))
-    # except OSError:
-    #     print('Missing file')
-    #     print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
-    #
-    # prob_max = amax(prob_ss_array)
+    input_file_name = (
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190924_no_vary_n1_3" +
+            "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+    try:
+        data_array = loadtxt(
+            input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
+        N = int(sqrt(len(data_array)))
+        prob_ss_array = data_array.reshape((N, N))
+    except OSError:
+        print('Missing file')
+        print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+
+    prob_max = amax(prob_ss_array)
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
-        if Ecouple in [2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0] and num_minima1 == 3.0:
+        if num_minima1 != 3.0:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190924_no_vary_n1_3" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        elif Ecouple in [2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0] and num_minima1 == 3.0:
             input_file_name = (
                     "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
                     "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
@@ -1376,7 +1380,7 @@ def plot_2D_prob():
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
         flux_array = zeros((2, N, N))
-        calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
+        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
         flux_array = asarray(flux_array) / (dx * dx)
 
         # force_FoF1 = zeros((N, N))
@@ -1386,7 +1390,7 @@ def plot_2D_prob():
         #     for j in range(N):
         #         force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
 
-        ax1[ii].contourf(flux_array[0, ...], vmax=None)
+        ax1[ii].contourf(prob_ss_array, vmax=prob_max)
 
         if ii == 0:
             ax1[ii].set_title("$E_{couple}$" + "={}".format(Ecouple))
@@ -1396,6 +1400,121 @@ def plot_2D_prob():
             ax1[ii].set_title("{}".format(Ecouple))
             ax1[ii].set_yticklabels(['', '', '', '', '', '', ''])
         ax1[ii].set_xlabel('$\\theta_1$')
+        ax1[ii].spines['right'].set_visible(False)
+        ax1[ii].spines['top'].set_visible(False)
+        # ax1[ii].set_xticks([0, 60, 120, 180, 240, 300, 360])
+        # ax1[ii].set_yticks([0, 60, 120, 180, 240, 300, 360])
+        ax1[ii].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        ax1[ii].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+
+
+    f1.tight_layout()
+    f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
+
+
+def plot_2D_prob_flux():
+    output_file_name1 = (
+            "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
+            "Pss_flux_2D_scaled_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+
+    Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
+    # Ecouple_array = array([8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 64.0])
+
+    plt.figure()
+    f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(18, 3))
+
+    # Find max prob. to set plot range
+    input_file_name = (
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+            "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+    try:
+        data_array = loadtxt(
+            input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
+        N = int(sqrt(len(data_array)))
+        prob_ss_array = data_array.reshape((N, N))
+    except OSError:
+        print('Missing file')
+        print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+
+    prob_max = amax(prob_ss_array)
+
+    # plots
+    for ii, Ecouple in enumerate(Ecouple_array):
+        if num_minima1 != 3.0:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190924_no_vary_n1_3" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        elif Ecouple in [2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0] and num_minima1 == 3.0:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        elif num_minima1 == 3.0:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_Extra_measurements_Ecouple" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        elif Ecouple in [8.0, 16.0, 64.0] and num_minima1 == 6.0:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/n6" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        elif Ecouple in [8.0, 16.0, 64.0] and num_minima1 == 12.0:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/n12" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        else:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        try:
+            data_array = loadtxt(
+                input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
+                usecols=(0, 2, 3, 4, 5, 6, 7, 8))
+            N = int(sqrt(len(data_array[:, 0])))  # check grid size
+            dx = 2 * math.pi / N  # spacing between gridpoints
+            positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
+            potential_at_pos = data_array[:, 1].reshape((N, N))
+            prob_ss_array = data_array[:, 0].reshape((N, N))
+            drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+            # integrate using axis=1 integrates out the y component, gives us P(x)
+            # prob_ss_x = trapz(prob_ss_array, axis=1)
+            # prob_ss_y = trapz(prob_ss_array, axis=0)
+        except OSError:
+            print('Missing file')
+            print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+
+        flux_array = zeros((2, N, N))
+        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+        flux_array = asarray(flux_array) / (dx * dx)
+
+        # force_FoF1 = zeros((N, N))
+        # force_Fo = zeros((N, N))
+        # for i in range(N):
+        #     force_Fo[i, :] = -1.5 * E0 * sin(3*positions[i])
+        #     for j in range(N):
+        #         force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
+
+        ax1[ii].contourf(prob_ss_array.T, vmax=prob_max, cmap=plt.cm.cool)
+
+        # select fewer arrows to draw
+        M = 18  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
+        fluxX = empty((M, M))
+        fluxY = empty((M, M))
+        for k in range(M):
+            fluxX[k] = flux_array[0, ...][int(N / M) * k, ::int(N / M)]
+            fluxY[k] = flux_array[1, ...][int(N / M) * k, ::int(N / M)]
+
+        ax1[ii].quiver(positions[::int(N / M)]*(N/6), positions[::int(N / M)]*(N/6), fluxX.T, fluxY.T, units='xy',
+                       angles='xy', scale_units='xy')
+
+        if ii == 0:
+            ax1[ii].set_title("$E_{couple}$" + "={}".format(Ecouple))
+            ax1[ii].set_ylabel('$\\theta_{\\rm 1}$')
+            ax1[ii].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        else:
+            ax1[ii].set_title("{}".format(Ecouple))
+            ax1[ii].set_yticklabels(['', '', '', '', '', '', ''])
+        ax1[ii].set_xlabel('$\\theta_{\\rm o}$')
         ax1[ii].spines['right'].set_visible(False)
         ax1[ii].spines['top'].set_visible(False)
         # ax1[ii].set_xticks([0, 60, 120, 180, 240, 300, 360])
@@ -1537,6 +1656,60 @@ def plot_derivative_flux():
     f1.tight_layout()
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
 
+
+def plot_1D_flux():
+    Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
+
+    plt.figure()
+    f, ax = plt.subplots(1, Ecouple_array.size, figsize=(18, 3), sharey='all')
+
+    for i, Ecouple in enumerate(Ecouple_array):
+        input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200810_bipartite/" +
+                           "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                           "_outfile.dat")
+
+        output_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
+                            "Flux_flat_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                            "_outfile.pdf")
+        try:
+            data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
+                                 usecols=(0, 3, 4, 5, 6, 7, 8))
+            N = int(sqrt(len(data_array)))  # check grid size
+            dx = 2 * math.pi / N  # spacing between gridpoints
+            positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
+
+            prob_ss_array = data_array[:, 0].reshape((N, N))
+            drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
+        except OSError:
+            print('Missing file')
+            print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+
+        flux_array = zeros((2, N, N))
+        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+
+        flux_x = trapz(flux_array[0, ...], axis=1)
+        flux_y = trapz(flux_array[1, ...], axis=0)
+
+        ax[i].plot(positions, flux_x)
+        ax[i].plot(positions, flux_y)
+
+
+        if i == 0:
+            ax[i].set_title("$E_{couple}$" + "={}".format(Ecouple))
+            ax[i].set_ylabel('$J_i(\\theta_{\\rm 1})$')
+        else:
+            ax[i].set_title("{}".format(Ecouple))
+        ax[i].set_xlabel('$\\theta_{\\rm i}$')
+        ax[i].spines['right'].set_visible(False)
+        ax[i].spines['top'].set_visible(False)
+        ax[i].set_xticks([0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3, 2 * pi])
+        ax[i].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+
+    f.tight_layout()
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/data/"
     # flux_power_efficiency(target_dir)
@@ -1551,5 +1724,7 @@ if __name__ == "__main__":
     # calc_heat_flow()
     # plot_energy_flow()
     # plot_2D_prob()
+    # plot_2D_prob_flux()
     # plot_marginal_prob()
-    plot_derivative_flux()
+    # plot_derivative_flux()
+    plot_1D_flux()

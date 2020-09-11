@@ -74,7 +74,7 @@ def calc_derivative(flux_array, dflux_array, N, dx, k):
 
 
 def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as a function of the phase offset
-    Barrier_heights = [0.0, 2.0]
+    Barrier_heights = [2.0]
     phi = 0.0
 
     if quantity == 'nostalgia':
@@ -83,7 +83,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'learning_rate':
         output_file_name = (
-                target_dir + "results/" + "LearningRate_Ecouple_"
+                target_dir + "results/" + "LearningRate_test_Ecouple_"
                 + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
     elif quantity == 'learning_rate_2':
         output_file_name = (
@@ -141,6 +141,7 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                     usecols=(0, 1, 3, 4, 5, 6, 7, 8))
                 N = int(sqrt(len(data_array)))
                 dx = 2 * math.pi / N
+                positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
                 prob_ss_array = data_array[:, 0].T.reshape((N, N))
                 prob_eq_array = data_array[:, 1].T.reshape((N, N))
                 drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
@@ -168,11 +169,11 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
                 calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
 
                 dflux_array = empty((2, N, N))
-                derivative_flux(flux_array, dflux_array, N)
+                derivative_flux(flux_array, dflux_array, N, dx)
 
                 learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0)/prob_ss_array)
 
-                information[ii] = trapz(trapz(learning, dx=1, axis=1), dx=1) * timescale
+                information[ii] = trapz(trapz(learning)) * timescale
 
             elif quantity == 'learning_rate_2':
                 step_X = empty((N, N))
@@ -971,7 +972,7 @@ def plot_super_grid_peak(target_dir, dt):  # grid of plots of output power, diss
     labellst = ['$2$', '$4$']
 
     output_file_name = (
-            target_dir + "results/" + "Super_grid_peak_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_.pdf")
+            target_dir + "results/" + "Super_grid_peak_l2_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_log_.pdf")
 
     f, axarr = plt.subplots(4, 3, sharex='all', figsize=(8, 8))
 
@@ -980,43 +981,6 @@ def plot_super_grid_peak(target_dir, dt):  # grid of plots of output power, diss
         E1 = E0
         for i, psi_1 in enumerate(psi1_array):
             psi_2 = psi2_array[i]
-
-            for ii, Ecouple in enumerate(Ecouple_array_tot):
-                # print(Ecouple)
-                if E0 == 2.0:
-                    if Ecouple in Ecouple_extra:
-                        input_file_name = (
-                                "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/200511_2kT_extra/" +
-                                "flux_power_efficiency_" +
-                                "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-                    else:
-                        input_file_name = (
-                                    "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/plotting_data/Driving_forces/" +
-                                    "flux_power_efficiency_" +
-                                    "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-                elif E0 == 4.0:
-                    input_file_name = (
-                            "/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/200506_4kTbarrier/spectral/" +
-                            "flux_power_efficiency_" +
-                            "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-                try:
-                    data_array = loadtxt(
-                        input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple),
-                        usecols=(2, 4))
-                    if E0 == 2.0 and psi_1 == 4.0 and psi_2 == -2.0 and Ecouple in Ecouple_array:
-                        flux_y = data_array[0]
-                        power_y = data_array[1]
-                    else:
-                        flux_y = data_array[0]
-                        power_y = data_array[1]
-                except OSError:
-                    print('Missing file power')
-                    print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
-
-                # grab output power
-                output_power[ii, i] = -2 * pi * timescale * power_y
-                # calculate dissipation
-                flux[ii, i] = 2 * pi * timescale * flux_y
 
             for ii, Ecouple in enumerate(Ecouple_array_tot):
                 if E0 == 2.0:
@@ -1049,6 +1013,8 @@ def plot_super_grid_peak(target_dir, dt):  # grid of plots of output power, diss
                         input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi),
                         usecols=(0, 1, 3, 4, 5, 6, 7, 8))
                     N = int(sqrt(len(data_array)))  # check grid size
+                    dx = 2 * math.pi / N  # spacing between gridpoints
+                    positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
                     prob_ss_array = data_array[:, 0].T.reshape((N, N))
                     prob_eq_array = data_array[:, 1].T.reshape((N, N))
                     drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
@@ -1057,24 +1023,31 @@ def plot_super_grid_peak(target_dir, dt):  # grid of plots of output power, diss
                     print('Missing file')
                     print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
-                # calculate energy flow
+                # calculate flux
                 flux_array = zeros((2, N, N))
-                calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
+                calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
 
-                force_FoF1 = zeros((N, N))
-                for jj in range(N):
-                    for j in range(N):
-                        force_FoF1[jj, j] = -0.5 * Ecouple * sin(positions[jj] - positions[j])
+                flux[ii, i] = trapz(trapz(flux_array[1, ...])) * timescale
 
-                energy_flow[ii, i] = trapz(trapz(-flux_array[1, ...] * force_FoF1, dx=dx), dx=dx) * timescale
+                # calculate output power
+                output_power[ii, i] = -psi_2 * flux[ii, i]
 
                 # calculate learning rate (=nostalgia)
                 dflux_array = empty((2, N, N))
-                derivative_flux(flux_array, dflux_array, N)
+                derivative_flux(flux_array, dflux_array, N, dx)
 
                 learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0)/prob_ss_array)
 
-                learning_rate[ii, i] = trapz(trapz(learning, dx=1, axis=1), dx=1) * timescale
+                learning_rate[ii, i] = trapz(trapz(learning)) * timescale
+
+                # calculate energy flow
+                # force_FoF1 = zeros((N, N))
+                # for jj in range(N):
+                #     for j in range(N):
+                #         force_FoF1[jj, j] = -0.5 * Ecouple * sin(positions[jj] - positions[j])
+
+                # energy_flow[ii, i] = trapz(trapz(-flux_array[1, ...] * force_FoF1)) * timescale
+                energy_flow[ii, i] = -trapz(trapz(dflux_array[1, ...] * log(prob_ss_array))) * timescale
 
             # plot line at coupling strength corresponding to max power
             maxpos = argmax(output_power[:, i], axis=0)
@@ -1092,17 +1065,22 @@ def plot_super_grid_peak(target_dir, dt):  # grid of plots of output power, diss
 
             for j in range(4):
                 axarr[j, i].yaxis.offsetText.set_fontsize(14)
-                axarr[j, i].ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
+                # axarr[j, i].ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
                 axarr[j, i].tick_params(axis='y', labelsize=14)
                 axarr[j, i].set_xscale('log')
+                axarr[j, i].set_yscale('log')
                 axarr[j, i].spines['right'].set_visible(False)
                 axarr[j, i].spines['top'].set_visible(False)
                 axarr[j, i].set_xlim((2, 150))
-                axarr[j, i].set_ylim(bottom=0)
+                # axarr[j, i].set_ylim(bottom=0)
+            axarr[0, i].set_ylim((0.05, 30))
+            axarr[1, i].set_ylim((0.05, 150))
+            axarr[2, i].set_ylim((0.02, 10))
+            axarr[3, i].set_ylim((0.02, 10))
 
             axarr[0, i].set_title(r'$%.0f$' % psi1_array[i], fontsize=18)
 
-    axarr[3, 2].set_ylim(top=6)
+    # axarr[3, 2].set_ylim(top=6)
     axarr[0, 0].set_ylabel(r'$J_1 (\rm rad \cdot s^{-1})$', fontsize=14)
     axarr[1, 0].set_ylabel(r'$\beta \mathcal{P}_{\rm ATP} (\rm s^{-1})$', fontsize=14)
     axarr[2, 0].set_ylabel(r'$\beta \dot{E}_{\rm F_o \to F_1} (\rm s^{-1})$', fontsize=14)
@@ -1234,9 +1212,10 @@ def plot_super_grid_phi(target_dir, dt):  # grid of plots of output power, dissi
 
 
 def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency as a function of the coupling strength
-    markerlst = ['D', 's', 'o', 'v', 'x']
-    color_lst = ['C2', 'C3', 'C1', 'C4', 'C6']
+    markerlst = ['D', 's', 'o', 'v', 'x', 'p']
+    color_lst = ['C2', 'C3', 'C1', 'C4', 'C6', 'C6']
     Ecouple_array_tot = array([4.0, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    # Ecouple_array_tot = array([4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     phi = 0.0
     learning_rate = zeros((Ecouple_array_tot.size, min_array.size))
 
@@ -1244,7 +1223,7 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     axarr.axhline(0, color='black', label='_nolegend_')
 
     output_file_name = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" + \
-                       "Learning_rate_Ecouple_nn_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log_.pdf"
+                       "Learning_rate_Ecouple_nn_scaled_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log_log_.pdf"
 
     # Fokker-Planck results (barriers)
     for j, num_min in enumerate(min_array):
@@ -1265,6 +1244,11 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
                 input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n12/" + \
                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
                                   "_outfile.dat"
+            elif num_min == 13.0:
+                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190812_n12_N540/" + \
+                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
+                                  "_outfile.dat"
+                num_min = 12.0
             elif num_min != 3.0:
                 input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints/" + \
                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
@@ -1305,8 +1289,8 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
 
             learning_rate[ii, j] = trapz(trapz(learning, dx=1, axis=1), dx=1) * timescale
 
-        axarr.plot(Ecouple_array_tot, learning_rate[:, j], color=color_lst[j], label=num_min, markersize=6,
-                   marker=markerlst[j], linestyle='-')
+        axarr.plot(Ecouple_array_tot * 2 * pi / num_min, learning_rate[:, j],
+                   color=color_lst[j], label=num_min, markersize=6, marker=markerlst[j], linestyle='-')
 
     # formatting
     axarr.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
@@ -1317,6 +1301,7 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     axarr.spines['right'].set_visible(False)
     axarr.spines['top'].set_visible(False)
     axarr.set_xscale('log')
+    axarr.set_yscale('log')
 
     leg = axarr.legend(['$1$', '$2$', '$3$', '$6$', '$12$'], title=r'$n_{\rm o} = n_1$', fontsize=14,
                        loc='best', frameon=False)
@@ -1503,8 +1488,8 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
     phase_array_1 = append(phase_array_1, 6.28319)
     print(learning_rate)
     for j, num_min in enumerate(min_array):
-        axarr.plot(phase_array_1, append(learning_rate[:, j], learning_rate[0, j]), color=color_lst[j], label=num_min, markersize=6,
-                   marker=markerlst[j], linestyle='-')
+        axarr.plot(phase_array_1, append(learning_rate[:, j], learning_rate[0, j]), color=color_lst[j], label=num_min,
+                   markersize=6, marker=markerlst[j], linestyle='-')
 
     # formatting
     axarr.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
@@ -1525,9 +1510,10 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, phi))
 
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    # plot_ITQ_Ecouple(target_dir, 'nostalgia', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
+    # plot_ITQ_Ecouple(target_dir, 'learning_rate', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy' and the last option is dt.
     # dt = 0.001 is the standard used in the simulations.
     # plot_learning_rates_Ecouple(target_dir, 5e-2)
@@ -1535,8 +1521,8 @@ if __name__ == "__main__":
     # plot_correlation_nostalgia_power_peaks(target_dir)
     # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
     # plot_super_grid(target_dir, 5e-2)
-    # plot_super_grid_peak(target_dir, 5e-2)
+    plot_super_grid_peak(target_dir, 5e-2)
     # plot_super_grid_phi(target_dir, 5e-2)
     # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
-    plot_nn_learning_rate_phi(target_dir, 5e-2)
+    # plot_nn_learning_rate_phi(target_dir, 5e-2)
     # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
