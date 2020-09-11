@@ -12,7 +12,7 @@ def get_params():
 
     # discretization parameters
     dt = 0.001  # time discretization. Keep this number low
-    N = 360  # inverse space discretization. Keep this number high!
+    N = 540  # inverse space discretization. Keep this number high!
 
     # model constants
     beta = 1.0  # thermodynamic beta: 1/kT

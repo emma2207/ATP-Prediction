@@ -7,20 +7,20 @@
 # ===========================================================================
 
 E0_array=(2.0)
-Ecouple_array=(0.0 2.0 4.0 8.0 16.0 32.0 64.0 128.0)
+Ecouple_array=(0.0 1.41 2.0 2.83 4.0 5.66 8.0 11.31 16.0 22.63 32.0 45.25 64.0 90.51 128.0)
 psi1_array=(4.0)
 psi2_array=(-2.0)
 phase_array=(0.0)
 
-n_array1=(3.0)
-n_array2=(3.0)
+n_array1=(1.0 2.0 3.0 6.0 12.0)
+ n_array2=(3.0)
 
 mkdir -p master_output_dir
 
 for n1 in ${n_array1[@]}
 do
-    for n2 in ${n_array2[@]}
-    do
+     for n2 in ${n_array2[@]}
+     do
         mkdir n1_${n1}_n2_${n2}_dir/
         cd n1_${n1}_n2_${n2}_dir/
 
@@ -83,5 +83,5 @@ do
             cd ..
         done
         cd ..
-    done
+    # done
 done
