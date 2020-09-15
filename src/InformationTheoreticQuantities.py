@@ -1214,7 +1214,7 @@ def plot_super_grid_phi(target_dir, dt):  # grid of plots of output power, dissi
 def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency as a function of the coupling strength
     markerlst = ['D', 's', 'o', 'v', 'x', 'p']
     color_lst = ['C2', 'C3', 'C1', 'C4', 'C6', 'C6']
-    Ecouple_array_tot = array([4.0, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    Ecouple_array_tot = array([1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
     # Ecouple_array_tot = array([4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     phi = 0.0
     learning_rate = zeros((Ecouple_array_tot.size, min_array.size))
@@ -1222,74 +1222,23 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     f, axarr = plt.subplots(1, 1, sharex='col', sharey='row', figsize=(8, 6))
     axarr.axhline(0, color='black', label='_nolegend_')
 
-    output_file_name = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" + \
-                       "Learning_rate_Ecouple_nn_scaled_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log_log_.pdf"
+    output_file_name = input_dir + "results/" + \
+                       "Learning_rate_Ecouple_nn_scaled_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log_.pdf"
 
     # Fokker-Planck results (barriers)
     for j, num_min in enumerate(min_array):
         for ii, Ecouple in enumerate(Ecouple_array_tot):
-            if num_min == 1.0 and Ecouple in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n1/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 2.0 and Ecouple in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n2/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 6.0 and Ecouple in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n6/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 12.0 and Ecouple in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n12/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 13.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190812_n12_N540/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-                num_min = 12.0
-            elif num_min != 3.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 3.0 and Ecouple not in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            else:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
+            input_file_name = target_dir + "data/200915_energyflows/" + \
+                              "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + \
+                              "_outfile.dat"
             try:
-                data_array = loadtxt(
-                    input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_min, num_min, phi),
-                    usecols=(0, 3, 4, 5, 6, 7, 8))
-                N = int(sqrt(len(data_array)))  # check grid size
-                dx = 2 * math.pi / N
-                positions = linspace(0, 2 * math.pi - dx, N)
-                prob_ss_array = data_array[:, 0].T.reshape((N, N))
-                drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
-                diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
+                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
+                learning_rate[ii, j] = data_array[6]
             except OSError:
                 print('Missing file')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
 
-            # calculate learning rate
-            flux_array = zeros((2, N, N))
-            calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
-            dflux_array = empty((2, N, N))
-            derivative_flux(flux_array, dflux_array, N, dx)
-            for i in range(N):
-                for jj in range(N):
-                    if prob_ss_array[i, jj] == 0:
-                        prob_ss_array[i, jj] = 1e-18
-
-            learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0) / prob_ss_array)
-
-            learning_rate[ii, j] = trapz(trapz(learning, dx=1, axis=1), dx=1) * timescale
-
-        axarr.plot(Ecouple_array_tot * 2 * pi / num_min, learning_rate[:, j],
+        axarr.plot(Ecouple_array_tot, learning_rate[:, j],
                    color=color_lst[j], label=num_min, markersize=6, marker=markerlst[j], linestyle='-')
 
     # formatting
@@ -1301,7 +1250,7 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     axarr.spines['right'].set_visible(False)
     axarr.spines['top'].set_visible(False)
     axarr.set_xscale('log')
-    axarr.set_yscale('log')
+    # axarr.set_yscale('log')
 
     leg = axarr.legend(['$1$', '$2$', '$3$', '$6$', '$12$'], title=r'$n_{\rm o} = n_1$', fontsize=14,
                        loc='best', frameon=False)
@@ -1315,7 +1264,7 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
 def plot_n0_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency as a function of the coupling strength
     markerlst = ['D', 's', 'o', 'v', 'x']
     color_lst = ['C2', 'C3', 'C1', 'C4', 'C6']
-    Ecouple_array_tot = array([4.0, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    Ecouple_array_tot = array([1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
     phi = 0.0
     learning_rate = zeros((Ecouple_array_tot.size, min_array.size))
 
@@ -1328,49 +1277,16 @@ def plot_n0_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     # Fokker-Planck results (barriers)
     for j, num_min in enumerate(min_array):
         for ii, Ecouple in enumerate(Ecouple_array_tot):
-            if num_min != 3.0 and Ecouple in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190924_no_vary_n1_3/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min != 3.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 3.0 and Ecouple not in Ecouple_array:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            else:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
+            input_file_name = input_dir + "data/200915_energyflows/" + \
+                              "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + \
+                              "_outfile.dat"
             try:
                 data_array = loadtxt(
-                    input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_min, num_minima2, phi),
-                    usecols=(0, 3, 4, 5, 6, 7, 8))
-                N = int(sqrt(len(data_array)))  # check grid size
-                dx = 2 * math.pi / N
-                positions = linspace(0, 2 * math.pi - dx, N)
-                prob_ss_array = data_array[:, 0].T.reshape((N, N))
-                drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
-                diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
+                    input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_minima2, Ecouple))
+                learning_rate[ii, j] = data_array[6]
             except OSError:
                 print('Missing file')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_minima2, Ecouple))
-
-            # calculate learning rate
-            flux_array = zeros((2, N, N))
-            calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
-            dflux_array = empty((2, N, N))
-            derivative_flux(flux_array, dflux_array, N, dx)
-            for i in range(N):
-                for jj in range(N):
-                    if prob_ss_array[i, jj] == 0:
-                        prob_ss_array[i, jj] = 1e-18
-
-            learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0) / prob_ss_array)
-
-            learning_rate[ii, j] = trapz(trapz(learning, dx=1, axis=1), dx=1) * timescale
 
         axarr.plot(Ecouple_array_tot, learning_rate[:, j], color=color_lst[j], label=num_min, markersize=6,
                    marker=markerlst[j], linestyle='-')
@@ -1425,38 +1341,9 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
             phase_array = phase_array_12
 
         for ii, phi in enumerate(phase_array):
-            if num_min == 1.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n1/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 2.0 and (phi == 0.0 or phi == 1.0472 or phi == 2.0944):
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n2/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 2.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 6.0 and (phi == 0.0 or phi == 0.349066 or phi == 0.698132):
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n6/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 6.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 12.0 and phi == 0.4363:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200213_extrapoints/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            elif num_min == 12.0:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n12/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
-            else:
-                input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" + \
-                                  "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
-                                  "_outfile.dat"
+            input_file_name = "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190729_varying_n/" + "n1/" + \
+                              "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + \
+                              "_outfile.dat"
             try:
                 data_array = loadtxt(
                     input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_min, num_min, phi),
@@ -1521,8 +1408,8 @@ if __name__ == "__main__":
     # plot_correlation_nostalgia_power_peaks(target_dir)
     # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
     # plot_super_grid(target_dir, 5e-2)
-    plot_super_grid_peak(target_dir, 5e-2)
+    # plot_super_grid_peak(target_dir, 5e-2)
     # plot_super_grid_phi(target_dir, 5e-2)
     # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
-    # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
+    plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
