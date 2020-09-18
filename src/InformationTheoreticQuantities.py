@@ -21,6 +21,7 @@ num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 
@@ -1398,6 +1399,99 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, phi))
 
 
+def compare_info(target_dir, dt):  # grid of plots of the flux as a function of the phase offset
+    Barrier_heights = [2.0]
+    phi = 0.0
+    Ecouple_array_tot = array(
+        [1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 10.0, 11.31, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0,
+         45.25, 64.0, 90.51, 128.0])
+    information = zeros((5, Ecouple_array_tot.size))
+    labels = ['Energy flow, cond prob', 'Energy flow, joint prob', 'Energy flow, original', 'learning rate, original',
+              'learning rate, joint']
+
+    output_file_name = (
+            target_dir + "results/" + "Energyflow_learning_rate_Ecouple_"
+            + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_log_.pdf")
+
+    f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
+
+    for jj, E0 in enumerate(Barrier_heights):
+        E1 = E0
+        for ii, Ecouple in enumerate(Ecouple_array_tot):
+            if Ecouple in Ecouple_array:
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" +
+                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                   "_outfile.dat")
+            elif Ecouple in Ecouple_extra:
+                input_file_name = (
+                            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_Extra_measurements_Ecouple/" +
+                            "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                            "_outfile.dat")
+            elif Ecouple in Ecouple_array_double:
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" +
+                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                   "_outfile.dat")
+            try:
+                data_array = loadtxt(
+                    input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
+                N = int(sqrt(len(data_array)))
+                dx = 2 * math.pi / N
+                positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
+                prob_ss_array = data_array[:, 0].reshape((N, N))
+                prob_eq_array = data_array[:, 1].reshape((N, N))
+                potential_at_pos = data_array[:, 2].reshape((N, N))
+                drift_at_pos = data_array[:, 3:5].T.reshape((2, N, N))
+                diffusion_at_pos = data_array[:, 5:].T.reshape((4, N, N))
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
+
+            flux_array = empty((2, N, N))
+            calc_flux(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+
+            dflux_array = empty((2, N, N))
+            derivative_flux(flux_array, dflux_array, N, dx)
+
+            dpotential_y = empty((N, N))
+            calc_derivative(potential_at_pos, dpotential_y, N, dx, 1)
+
+            learning = dflux_array[1, ...] * log(prob_eq_array.sum(axis=0)/prob_eq_array)
+            learning_2 = -dflux_array[1, ...] * log(prob_eq_array)
+            learning_3 = -flux_array[1, ...] * dpotential_y
+            learning_4 = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0)/prob_ss_array)
+            learning_5 = -dflux_array[1, ...] * log(prob_ss_array)
+
+            information[0, ii] = trapz(trapz(learning)) * timescale
+            information[1, ii] = trapz(trapz(learning_2)) * timescale
+            information[2, ii] = trapz(trapz(learning_3)) * timescale
+            information[3, ii] = trapz(trapz(learning_4)) * timescale
+            information[4, ii] = trapz(trapz(learning_5)) * timescale
+
+        # ax.axhline(0, color='black')
+        for i in range(5):
+            ax.plot(Ecouple_array_tot, information[i, :], 'o', markersize=8, label=labels[i])
+
+    ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+    ax.yaxis.offsetText.set_fontsize(14)
+    ax.tick_params(axis='both', labelsize=16)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    # ax.set_ylim((-0.1, 2.5))
+    ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
+    # ax.set_ylabel(r'$\rm \dot{E}_{\rm o \to 1}$', fontsize=20)
+    # ax.set_ylabel(r'$\ell_{\rm o \to 1}$', fontsize=20)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+
+    leg = ax.legend(fontsize=16, loc='best', frameon=False)
+    leg_title = leg.get_title()
+    leg_title.set_fontsize(20)
+
+    # f.subplots_adjust(hspace=0.01)
+    f.tight_layout()
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
+
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # plot_ITQ_Ecouple(target_dir, 'learning_rate', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
@@ -1412,4 +1506,5 @@ if __name__ == "__main__":
     # plot_super_grid_phi(target_dir, 5e-2)
     # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
-    plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
+    # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
+    compare_info(target_dir, 5e-2)
