@@ -13,8 +13,8 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 2.0  # barrier height Fo
-E1 = 2.0  # barrier height F1
+E0 = 4.0  # barrier height Fo
+E1 = 4.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
@@ -22,9 +22,9 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
-# Ecouple_array_total = sort(concatenate((Ecouple_array_double, Ecouple_array, Ecouple_array_peak)))
-Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+Ecouple_array_all = sort(concatenate((Ecouple_array_double, Ecouple_array, Ecouple_array_peak)))
+# Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 
@@ -286,9 +286,13 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 def heat_work_info(target_dir):
     # Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
-    Ecouple_array = array([0.0, 1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
-    psi1_array = array([4.0])
-    psi2_array = array([-2.0])
+    # Ecouple_array = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+    Ecouple_array = array([0.0, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    # Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
+    # Ecouple_array = array([0.0])
+    # Ecouple_array = Ecouple_array_total
+    psi1_array = array([8.0])
+    psi2_array = array([-1.0])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -302,11 +306,11 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200914_reruns_n/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/spectral/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 
-                    output_file_name = (target_dir + "200915_energyflows/" + "power_heat_info_" +
+                    output_file_name = (target_dir + "data/200915_energyflows/" + "power_heat_info_" +
                                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
                     print("Calculating stuff for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
@@ -362,8 +366,13 @@ def heat_work_info(target_dir):
                     dflux_array = empty((2, N, N))
                     derivative_flux(flux_array, dflux_array, N, dx)
 
-                    learning_rate[ii] = trapz(trapz(
-                        dflux_array[1, ...] * log(prob_ss_array.sum(axis=0) / prob_ss_array)
+                    for i in range(N):
+                        for j in range(N):
+                            if prob_ss_array[i, j] == 0:
+                                prob_ss_array[i, j] = 10e-18
+
+                    learning_rate[ii] = -trapz(trapz(
+                        dflux_array[1, ...] * log(prob_ss_array)
                     )) * timescale
 
                 with open(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple), "w") as \
@@ -1345,54 +1354,67 @@ def calc_heat_flow():
 
 def plot_energy_flow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([4.0])
-    psi2_array = array([-2.0])
+    psi1_array = array([8.0])
+    psi2_array = array([-4.0])
+    barrier_height = array([2.0])
 
     input_file_name = (target_dir + "data/200915_energyflows/" + "power_heat_info_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = (target_dir + "results/" + "Flux_xy_Ecouple_" +
+    output_file_name = (target_dir + "results/" + "Heat_Ecouple_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
-
-    power_x = empty(Ecouple_array_total.size)
-    power_y = empty(Ecouple_array_total.size)
-    heat_x = empty(Ecouple_array_total.size)
-    heat_y = empty(Ecouple_array_total.size)
-    energy_xy = empty(Ecouple_array_total.size)
-    learning_rate = empty(Ecouple_array_total.size)
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
-            for i, Ecouple in enumerate(Ecouple_array_total):
-                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
-                power_x[i] = data_array[1]
-                power_y[i] = data_array[2]
-                heat_x[i] = data_array[3]
-                heat_y[i] = data_array[4]
-                energy_xy[i] = data_array[5]
-                learning_rate[i] = data_array[6]
-
             plt.figure()
             f, ax = plt.subplots(1, 1)
+            for j, E0 in enumerate(barrier_height):
+                E1 = E0
+                if E0 == 0.0:
+                    Ecouple_array_total = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
+                else:
+                    Ecouple_array_total = Ecouple_array_all
 
-            ax.axhline(0, color='black')
-            # ax.axhline(1, color='grey')
+                power_x = empty(Ecouple_array_total.size)
+                power_y = empty(Ecouple_array_total.size)
+                heat_x = empty(Ecouple_array_total.size)
+                heat_y = empty(Ecouple_array_total.size)
+                energy_xy = empty(Ecouple_array_total.size)
+                learning_rate = empty(Ecouple_array_total.size)
 
-            ax.plot(Ecouple_array_total, power_x/psi_1, '-o', label=r'$\mathcal{J}_{\rm o}$', color='tab:green')
-            ax.plot(Ecouple_array_total, power_y/psi_2, '-o', label=r'$\mathcal{J}_1$', color='tab:red')
+                for i, Ecouple in enumerate(Ecouple_array_total):
+                    try:
+                        data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+                        power_x[i] = data_array[1]
+                        power_y[i] = data_array[2]
+                        heat_x[i] = data_array[3]
+                        heat_y[i] = data_array[4]
+                        energy_xy[i] = data_array[5]
+                        learning_rate[i] = data_array[6]
+                    except OSError:
+                        print('Missing file')
+
+                # print(learning_rate)
+
+                ax.axhline(0, color='black')
+                # ax.axhline(1, color='grey')
+
+                # ax.plot(Ecouple_array_total, learning_rate, '-o', label=r'$\ell_{\rm o \to 1}$')
+                ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
+                ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
             # ax.set_ylim((0, None))
-
-            # ax.plot(Ecouple_array, information_flow_x/50, '-o', label=r'$\dot{I}$')
 
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
-            # ax.spines['bottom'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
             ax.set_xscale('log')
             # ax.set_yscale('log')
             ax.set_xlabel(r'$E_{\rm couple}$', fontsize=14)
-            ax.set_ylabel(r'$\mathcal{J}\ (\rm rad \cdot s^{-1})$', fontsize=14)
+            # ax.set_ylabel(r'$\ell_{\rm o \to 1}$', fontsize=14)
+            # ax.set_ylabel(r'$\dot{Q}_1 / \dot{Q}_{\rm o}$', fontsize=14)
             # ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
             ax.tick_params(axis='both', labelsize=14)
             ax.yaxis.offsetText.set_fontsize(14)
+            # ax.legend(fontsize=12, frameon=False, ncol=1, title=r'$E_{\rm o} = E_1$')
             ax.legend(fontsize=12, frameon=False, ncol=1)
 
             f.tight_layout()

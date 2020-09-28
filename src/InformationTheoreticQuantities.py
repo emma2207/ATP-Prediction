@@ -1497,7 +1497,7 @@ if __name__ == "__main__":
     # plot_ITQ_Ecouple(target_dir, 'learning_rate', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
     # 'relative_entropy' and the last option is dt.
     # dt = 0.001 is the standard used in the simulations.
-    # plot_learning_rates_Ecouple(target_dir, 5e-2)
+    plot_learning_rates_Ecouple(target_dir, 5e-2)
     # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
     # plot_correlation_nostalgia_power_peaks(target_dir)
     # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
@@ -1507,4 +1507,4 @@ if __name__ == "__main__":
     # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
     # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
-    compare_info(target_dir, 5e-2)
+    # compare_info(target_dir, 5e-2)
