@@ -1354,13 +1354,13 @@ def calc_heat_flow():
 
 def plot_energy_flow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([8.0])
-    psi2_array = array([-4.0])
-    barrier_height = array([2.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
+    barrier_height = array([0.0])
 
     input_file_name = (target_dir + "data/200915_energyflows/" + "power_heat_info_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = (target_dir + "results/" + "Heat_Ecouple_" +
+    output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     for psi_1 in psi1_array:
@@ -1398,9 +1398,11 @@ def plot_energy_flow(target_dir):
                 ax.axhline(0, color='black')
                 # ax.axhline(1, color='grey')
 
-                # ax.plot(Ecouple_array_total, learning_rate, '-o', label=r'$\ell_{\rm o \to 1}$')
+                ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta P_{\rm H^+}$', color='tab:blue')
+                ax.plot(Ecouple_array_total, power_y, '-o', label=r'$\beta P_{\rm ATP}$', color='tab:orange')
                 ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
                 ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
+                ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\dot{E}_{\rm o \to 1}$', color='tab:purple')
             # ax.set_ylim((0, None))
 
             ax.spines['right'].set_visible(False)
@@ -1718,12 +1720,12 @@ def plot_marginal_prob():
 def plot_derivative_flux():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "dFlux_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Small_P_test_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_log_.pdf")
 
     plt.figure()
     f1, ax1 = plt.subplots(1, 1)
-    av_flux = zeros(Ecouple_array.size)
-    av_dflux = zeros(Ecouple_array.size)
+    test = zeros(Ecouple_array.size)
+    test2 = zeros(Ecouple_array.size)
 
     input_file_name = (
             "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
@@ -1734,11 +1736,11 @@ def plot_derivative_flux():
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
-                usecols=(0, 2, 3, 4, 5, 6, 7, 8))
+                usecols=(0, 1, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array)))  # check grid size
-            print(N)
             dx = 2 * math.pi / N
             prob_ss_array = data_array[:, 0].reshape((N, N))
+            prob_eq_array = data_array[:, 1].reshape((N, N))
             drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
             diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
         except OSError:
@@ -1746,22 +1748,24 @@ def plot_derivative_flux():
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
         flux_array = zeros((2, N, N))
-        calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
-        av_flux[ii] = trapz(trapz(flux_array[1, ...]))
+        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
 
         dflux_array = zeros((2, N, N))
-        derivative_flux(flux_array, dflux_array, N)
-        av_dflux[ii] = trapz(trapz(log(prob_ss_array) * dflux_array[1, ...]))
+        derivative_flux(flux_array, dflux_array, N, dx)
+        test[ii] = trapz(trapz(log(prob_ss_array/prob_eq_array) * dflux_array[1, ...]))
+        test2[ii] = trapz(trapz((prob_ss_array/prob_eq_array) * dflux_array[1, ...]))
 
-    # ax1.plot(Ecouple_array, av_flux, 'o', label='Flux')
-    ax1.plot(Ecouple_array, av_dflux, 'o', label='Derivative flux')
+    ax1.plot(Ecouple_array, test, 'o')
+    ax1.plot(Ecouple_array, test2, 'o')
 
     ax1.set_xscale('log')
+    ax1.set_yscale('log')
+    # ax1.set_ylim((0, None))
     ax1.set_xlabel(r'$E_{\rm couple}$')
     ax1.spines['right'].set_visible(False)
     ax1.spines['top'].set_visible(False)
 
-    ax1.legend(fontsize=14, loc='best', frameon=False)
+    # ax1.legend(fontsize=14, loc='best', frameon=False)
 
     f1.tight_layout()
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
