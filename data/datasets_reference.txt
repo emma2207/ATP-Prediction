@@ -1,0 +1,16 @@
+200810_bipartite: 
+simulations of the full 2D Fokker-Planck code of the ATP synthase model with bipartite update steps.
+n1=n2=3, E0=E1=2, psi1=4, psi2=-2, Ecouple={0,2,4,8,16,32,64,128}, phi=0. 
+
+200811_heatflow:
+Figuring out how to calculate the various energy flows in the system (power, heat).
+n1=n2=3, E0=E1=2, psi1=4, psi2=-2, Ecouple={0, 1.41, 2, 2.83, 4, 5.66, 8, 10, 11.31, 12, 14, 16, 18, 20, 22, 22.63, 24, 32, 40.25, 64, 90.51, 128}, phi=0. 
+
+200914_reruns_n:
+Trying to even out power vs. coupling curves by rerunning some simulations with a finer grid (N=540).
+n1={1,2,3,6,12}, n2={1,2,3,6,12}, E0=E1=2, psi1=4, psi2=-2, Ecouple={0, 1.41, 2, 2.83, 4, 5.66, 8, 11.31, 16, 22.63, 32, 40.25, 64, 90.51, 128}, phi=0. 
+
+200915_energyflows:
+power_heat_info files report the in- and output power, heat dissipated due to each subsystem, energy transferred between subsystems, and the learning rate.
+n1={1,2,3,6,12}, n2={1,2,3,6,12} (only combinations of n1 != n2 = 3 for E0=E1=2), E0=E1={0,2,4}, psi1={8,4,2}, psi2={-4,-2,-1) (only combinations that obey|psi1|>|psi2|), Ecouple={0, 1.41, 2, 2.83, 4, 5.66, 8, 10, 11.31, 12, 14, 16, 18, 20, 22, 22.63, 24, 32, 40.25, 64, 90.51, 128}, phi=0. 
+
