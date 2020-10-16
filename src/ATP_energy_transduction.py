@@ -1626,22 +1626,26 @@ def plot_2D_prob_flux():
 def plot_marginal_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pcond_2_difference_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_theta_{6}" + "_.pdf")
-
-    input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
-            "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+            "Pcond_3_difference_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_theta_{6}" + "_.pdf")
 
     angles = linspace(0, 120, 10, dtype='int')  # index from 0 to 359 gives the position of \theta_o
 
-    print(angles)
+    Ecouple_array_select = array([2.0, 10.0, 16.0, 22.0, 128.0])
 
     for j in angles:
         print(j)
         plt.figure()
-        f1, ax1 = plt.subplots(1, Ecouple_array_peak.size, figsize=(18, 3), sharey='all')
+        f1, ax1 = plt.subplots(1, Ecouple_array_select.size, figsize=(3*Ecouple_array_select.size, 3), sharey='all')
         ##plots
-        for ii, Ecouple in enumerate(Ecouple_array_peak):
+        for ii, Ecouple in enumerate(Ecouple_array_select):
+            # if Ecouple in Ecouple_array_peak:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+            # else:
+            #     input_file_name = (
+            #             "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
+            #             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
             try:
                 data_array = loadtxt(
                     input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
@@ -1666,6 +1670,7 @@ def plot_marginal_prob():
             step_X = empty((N, N))
             step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
 
+            ax1[ii].axhline(0, color='black')
             ax1[ii].plot(positions, prob_ss_array[j, :]/prob_ss_array.sum(axis=0) - step_X[j, :]/step_X.sum(axis=0))
 
             # ax1[ii].plot(positions, step_X[j, :]/step_X.sum(axis=0), '--')
