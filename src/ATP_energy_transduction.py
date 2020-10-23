@@ -1,5 +1,5 @@
 from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, amax, \
-    concatenate, sort
+    concatenate, sort, roll
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -20,14 +20,16 @@ psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
-Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
-Ecouple_array_all = sort(concatenate((Ecouple_array_double, Ecouple_array, Ecouple_array_peak)))
+Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+Ecouple_array_all = sort(concatenate((Ecouple_array_double, Ecouple_array)))
 # Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-
+Ecouple_array_total = array([0.0, 1.0, 1.19, 1.41, 1.68, 2.0, 2.38, 2.83, 3.36, 4.0, 4.76, 5.66, 6.73, 8.0, 9.51, 11.31,
+                           13.45, 16.0, 19.03, 22.63, 26.91, 32.0, 38.05, 45.25, 53.82, 64.0, 76.11, 90.51, 107.63,
+                           128.0])
 
 def calc_flux_2(p_now, drift_at_pos, diffusion_at_pos, flux_array, N, dx):
     # explicit update of the corners
@@ -287,12 +289,14 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 def heat_work_info(target_dir):
     # Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
-    # Ecouple_array = array([0.0, 1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
-    Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
+    Ecouple_array = array([0.0, 1.0, 1.19, 1.41, 1.68, 2.0, 2.38, 2.83, 3.36, 4.0, 4.76, 5.66, 6.73, 8.0, 9.51, 11.31,
+                           13.45, 16.0, 19.03, 22.63, 26.91, 32.0, 38.05, 45.25, 53.82, 64.0, 76.11, 90.51, 107.63,
+                           128.0])
+    # Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
     # Ecouple_array = array([0.0])
     # Ecouple_array = Ecouple_array_total
-    psi1_array = array([2.0, 4.0, 8.0])
-    psi2_array = array([0.0])
+    psi1_array = array([6.0])
+    psi2_array = array([-3.0])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -306,7 +310,7 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201023_psi1_6.0/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 
@@ -1354,15 +1358,15 @@ def calc_heat_flow():
 
 def plot_energy_flow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([8.0, 4.0, 2.0])
-    psi2_array = array([0.0])
-    barrier_height = array([4.0])
+    psi1_array = array([6.0])
+    psi2_array = array([-3.0])
+    barrier_height = array([2.0])
 
-    input_file_name = (target_dir + "data/200915_energyflows/" + "E0_{0}_E1_{1}/" + #"n1_{4}_n2_{5}/" +
+    input_file_name = (target_dir + "data/200915_energyflows/" + "E0_{0}_E1_{1}/" + "n1_{4}_n2_{5}/" +
                        "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
     output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
-                       "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1626,16 +1630,17 @@ def plot_2D_prob_flux():
 def plot_marginal_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pcond_3_difference_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_theta_{6}" + "_.pdf")
+            "Pcond_4_difference_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_theta_{6}" + "_.pdf")
 
-    angles = linspace(0, 120, 10, dtype='int')  # index from 0 to 359 gives the position of \theta_o
+    angles = [0, 1]  # index from 0 to 359 gives the position of \theta_o
 
-    Ecouple_array_select = array([2.0, 10.0, 16.0, 22.0, 128.0])
+    Ecouple_array_select = array([2.0, 10.0, 16.0, 22.63, 128.0])
+    plt.figure()
+    f1, ax1 = plt.subplots(1, Ecouple_array_select.size, figsize=(3 * Ecouple_array_select.size, 3), sharey='all')
 
     for j in angles:
         print(j)
-        plt.figure()
-        f1, ax1 = plt.subplots(1, Ecouple_array_select.size, figsize=(3*Ecouple_array_select.size, 3), sharey='all')
+
         ##plots
         for ii, Ecouple in enumerate(Ecouple_array_select):
             # if Ecouple in Ecouple_array_peak:
@@ -1671,7 +1676,8 @@ def plot_marginal_prob():
             step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
 
             ax1[ii].axhline(0, color='black')
-            ax1[ii].plot(positions, prob_ss_array[j, :]/prob_ss_array.sum(axis=0) - step_X[j, :]/step_X.sum(axis=0))
+            ax1[ii].plot(positions, roll(prob_ss_array[int(j*N/3), :]/prob_ss_array.sum(axis=0) -
+                                         step_X[int(j*N/3), :]/step_X.sum(axis=0), -int((j*N/3))))
 
             # ax1[ii].plot(positions, step_X[j, :]/step_X.sum(axis=0), '--')
 
@@ -1683,27 +1689,29 @@ def plot_marginal_prob():
             ax1[ii].set_xlabel(r'$\theta_{\rm 1}$')
             ax1[ii].spines['right'].set_visible(False)
             ax1[ii].spines['top'].set_visible(False)
-            # ax1[ii].set_ylim(bottom=0)
+            ax1[ii].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+            ax1[ii].set_ylim([-3e-6, 3e-6])
             ax1[ii].set_xticks([0, pi/3, 2*pi/3, pi, 4*pi/3, 5*pi/3, 2*pi])
             ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
             # ax1[ii].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
 
-        f1.tight_layout()
-        f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, j))
+    f1.tight_layout()
+    f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, j))
 
 
 def plot_derivative_flux():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Small_P_test_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_log_.pdf")
+            "Pcond_slice_rotate_2_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     plt.figure()
-    f1, ax1 = plt.subplots(1, 1)
-    test = zeros(Ecouple_array.size)
-    test2 = zeros(Ecouple_array.size)
+    f1, ax1 = plt.subplots(1, 1, figsize=(6, 4))
+    Ecouple_array = array([16.0])
+
+    # ax1.axhline(0, color='black')
 
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
 
     ##plots
@@ -1714,6 +1722,7 @@ def plot_derivative_flux():
                 usecols=(0, 1, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array)))  # check grid size
             dx = 2 * math.pi / N
+            positions = linspace(0, 2 * math.pi - dx, N)
             prob_ss_array = data_array[:, 0].reshape((N, N))
             prob_eq_array = data_array[:, 1].reshape((N, N))
             drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
@@ -1722,25 +1731,34 @@ def plot_derivative_flux():
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        flux_array = zeros((2, N, N))
-        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+        # flux_array = zeros((2, N, N))
+        # calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+        #
+        # dflux_array = zeros((2, N, N))
+        # derivative_flux(flux_array, dflux_array, N, dx)
+    offset = 0
+    ax1.plot(positions, roll(prob_ss_array[offset, :] / prob_ss_array.sum(axis=0), offset), label='$0$')
+    ax1.plot(positions, roll(prob_ss_array[offset + int(N/3), :] / prob_ss_array.sum(axis=0), offset + int(2*N/3)), '--', label='$1/3$')
+    ax1.plot(positions, roll(prob_ss_array[offset + int(2*N/3), :] / prob_ss_array.sum(axis=0), offset + int(N/3)), '-.', label='$2/3$')
 
-        dflux_array = zeros((2, N, N))
-        derivative_flux(flux_array, dflux_array, N, dx)
-        test[ii] = trapz(trapz(log(prob_ss_array/prob_eq_array) * dflux_array[1, ...]))
-        test2[ii] = trapz(trapz((prob_ss_array/prob_eq_array) * dflux_array[1, ...]))
+    ax1.set_xticks([0, pi / 3, 2 * pi / 3, pi, 4 * pi / 3, 5 * pi / 3, 2 * pi])
+    ax1.set_xticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
+    ax1.set_xlim((0, 2*pi))
+    ax1.set_ylim((0, None))
 
-    ax1.plot(Ecouple_array, test, 'o')
-    ax1.plot(Ecouple_array, test2, 'o')
+    ax1.set_xlabel(r'$\theta_{\rm 1} $', fontsize=12)
+    ax1.set_ylabel(r'$P_{\rm ss} (\theta_1 | \theta_{\rm o})$', fontsize=12)
+    ax1.yaxis.offsetText.set_fontsize(12)
+    ax1.tick_params(axis='both', labelsize=12)
+    ax1.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
 
-    ax1.set_xscale('log')
-    ax1.set_yscale('log')
-    # ax1.set_ylim((0, None))
-    ax1.set_xlabel(r'$E_{\rm couple}$')
     ax1.spines['right'].set_visible(False)
     ax1.spines['top'].set_visible(False)
+    # ax1.spines['bottom'].set_visible(False)
 
-    # ax1.legend(fontsize=14, loc='best', frameon=False)
+    leg = ax1.legend(fontsize=12, loc='best', frameon=False, title=r'Slice at $\theta_o$')
+    leg_title = leg.get_title()
+    leg_title.set_fontsize(12)
 
     f1.tight_layout()
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
