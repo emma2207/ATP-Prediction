@@ -15,14 +15,14 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+psi_1 = 2.0  # chemical driving force on Fo
+psi_2 = -1.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
-Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
@@ -288,9 +288,9 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 
 def heat_work_info(target_dir):
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
-    psi1_array = array([4.0])
-    psi2_array = array([-2.0])
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+    psi1_array = array([8.0])
+    psi2_array = array([-4.0])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -1512,11 +1512,11 @@ def plot_2D_prob_flux():
             "Pss_2D_scaled_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     plt.figure()
-    f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(3*Ecouple_array.size, 3))
+    f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(2.5*Ecouple_array.size, 3))
 
     # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/2019-05-14" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     try:
         data_array = loadtxt(

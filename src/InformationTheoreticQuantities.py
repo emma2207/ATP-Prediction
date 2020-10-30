@@ -16,8 +16,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 4.0  # chemical driving force on Fo
-psi_2 = -2.0  # chemical driving force on F1
+psi_1 = 8.0  # chemical driving force on Fo
+psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -282,46 +282,56 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
 
 def plot_learning_rates_Ecouple(target_dir):
     phi = 0.0
+    barrier_heights = [0.0, 2.0, 4.0]
 
     output_file_name = (target_dir + "results/" + "LearningRate_Ecouple_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
     ax.axhline(0, color='black')
-    learning_rate = zeros(Ecouple_array_tot.size)
 
-    for ii, Ecouple in enumerate(Ecouple_array_tot):
-        input_file_name = (
-                    target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
-                    "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
-                    "_outfile.dat")
-        try:
-            data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
-            learning_rate[ii] = data_array[6]
+    for i, E0 in enumerate(barrier_heights):
+        E1 = E0
+        if E0 == 0.0:
+            Ecouple_array_tot = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
+        else:
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
 
-        except OSError:
-            print('Missing file')
-            print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+        learning_rate = zeros(Ecouple_array_tot.size)
+        for ii, Ecouple in enumerate(Ecouple_array_tot):
+            input_file_name = (
+                        target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
+                        "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                        "_outfile.dat")
+            try:
+                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+                learning_rate[ii] = data_array[6]
 
-    ax.plot(Ecouple_array_tot, learning_rate, 'o', color='C0', markersize=8)
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+
+        if E0 == 0.0:
+            ax.plot(Ecouple_array_tot, -learning_rate, 'o-', markersize=8, label=barrier_heights[i])
+        else:
+            ax.plot(Ecouple_array_tot, learning_rate, 'o-', markersize=8, label=barrier_heights[i])
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)
     ax.tick_params(axis='both', labelsize=16)
     ax.set_xscale('log')
-    # ax.set_yscale('log')
-    ax.set_ylim((0, None))
+    ax.set_yscale('log')
+    # ax.set_ylim((10e-1, 10e1))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
     ax.set_ylabel(r'$\ell_{\rm o \to 1} (\rm nats/s)$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
-    # leg = ax.legend(fontsize=16, loc='best', frameon=False)
-    # leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
-    # leg_title = leg.get_title()
-    # leg_title.set_fontsize(20)
+    leg = ax.legend(fontsize=16, loc='best', frameon=False)
+    leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
+    leg_title = leg.get_title()
+    leg_title.set_fontsize(20)
 
-    # f.subplots_adjust(hspace=0.01)
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
@@ -1283,7 +1293,7 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
 
 def compare_info(target_dir):
     phi = 0.0
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
     learning_rate = zeros(Ecouple_array_tot.size)
     labels = ['normal', 'dt changed']
     sizes = [8, 6]
@@ -1319,7 +1329,7 @@ def compare_info(target_dir):
     ax.tick_params(axis='both', labelsize=16)
     ax.set_xscale('log')
     # ax.set_yscale('log')
-    ax.set_ylim((-0, 2.5))
+    ax.set_ylim((-0, 3))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
     # ax.set_ylabel(r'$\rm \dot{E}_{\rm o \to 1}$', fontsize=20)
     # ax.set_ylabel(r'$\ell_{\rm o \to 1}$', fontsize=20)
