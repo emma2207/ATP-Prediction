@@ -1,8 +1,9 @@
 from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, amax, \
-    concatenate, sort, roll
+    concatenate, sort, roll, amin
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
+import matplotlib.colors as mc
 from utilities import step_probability_X, calc_flux_2, calc_derivative_pxgy, step_probability_Y
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
@@ -15,19 +16,17 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 2.0  # chemical driving force on Fo
-psi_2 = -1.0  # chemical driving force on F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
-Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
-Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
+Ecouple_array_double = array([11.31, 22.63, 45.25, 90.51]) # 2.83, 5.66
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
-
 
 Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
 
@@ -289,8 +288,8 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 def heat_work_info(target_dir):
     Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    psi1_array = array([8.0])
-    psi2_array = array([-4.0])
+    psi1_array = array([2.0])
+    psi2_array = array([-1.78, -1.33, -1.6])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -304,12 +303,12 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201022_dt/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200220_moregrid/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 
                     output_file_name = (target_dir + "data/200915_energyflows/" + "power_heat_info_" +
-                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile_dt_.dat")
+                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
                     print("Calculating stuff for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
                           f"Ecouple = {Ecouple}, num_minima1 = {num_minima1}, num_minima2 = {num_minima2}")
@@ -1352,15 +1351,15 @@ def calc_heat_flow():
 
 def plot_energy_flow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([6.0])
-    psi2_array = array([-3.0])
+    psi1_array = array([8.0])
+    psi2_array = array([-7.11, -6.4, -5.33])
     barrier_height = array([2.0])
 
     input_file_name = (target_dir + "data/200915_energyflows/" + "E0_{0}_E1_{1}/" + "n1_{4}_n2_{5}/" +
                        "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
     output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
-                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_log_.pdf")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1371,7 +1370,7 @@ def plot_energy_flow(target_dir):
                 if E0 == 0.0:
                     Ecouple_array_total = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
                 else:
-                    Ecouple_array_total = Ecouple_array_all
+                    Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
 
                 power_x = empty(Ecouple_array_total.size)
                 power_y = empty(Ecouple_array_total.size)
@@ -1399,10 +1398,16 @@ def plot_energy_flow(target_dir):
                 # ax.axhline(1, color='grey')
 
                 ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta P_{\rm H^+}$', color='tab:blue')
-                ax.plot(Ecouple_array_total, power_y, '-o', label=r'$\beta P_{\rm ATP}$', color='tab:orange')
+                ax.plot(Ecouple_array_total, -power_y, '-o', label=r'$-\beta P_{\rm ATP}$', color='tab:orange')
                 ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
                 ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
                 ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\dot{E}_{\rm o \to 1}$', color='tab:purple')
+                # ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
+                #         label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
+                # ax.plot(Ecouple_array_total, heat_x + power_x, '-o',
+                #         label=r'$J_{\rm o} \partial_{\theta_{\rm o}} V$', color='tab:olive')
+                # ax.plot(Ecouple_array_total, -heat_y - power_y, '-o',
+                #         label=r'$-J_1 \partial_{\theta_{\rm 1}} V$', color='tab:cyan')
             # ax.set_ylim((0, None))
 
             ax.spines['right'].set_visible(False)
@@ -1417,7 +1422,7 @@ def plot_energy_flow(target_dir):
             ax.tick_params(axis='both', labelsize=14)
             ax.yaxis.offsetText.set_fontsize(14)
             # ax.legend(fontsize=12, frameon=False, ncol=1, title=r'$E_{\rm o} = E_1$')
-            ax.legend(fontsize=12, frameon=False, ncol=3)
+            ax.legend(fontsize=12, frameon=False, ncol=1)
 
             f.tight_layout()
             f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -1509,27 +1514,61 @@ def plot_2D_prob():
 def plot_2D_prob_flux():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_2D_scaled_plot_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Integrand_LR_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+
+    Ecouple_array_tot = array([8.0, 10.0, 12.0, 14.0, 16.0, 22.0, 24.0, 32.0])
 
     plt.figure()
-    f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(2.5*Ecouple_array.size, 3))
+    f1, ax1 = plt.subplots(1, Ecouple_array_tot.size, figsize=(3.5*Ecouple_array_tot.size, 3))
 
     # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/2019-05-14" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     try:
         data_array = loadtxt(
-            input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
+            input_file_name.format(E0, amax(Ecouple_array_tot), E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
+            usecols=(0, 2, 3, 4, 5, 6, 7, 8))
         N = int(sqrt(len(data_array)))
-        prob_ss_array = data_array.reshape((N, N))
+        dx = 2 * math.pi / N  # spacing between gridpoints
+        positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
+        potential_at_pos = data_array[:, 1].reshape((N, N))
+        prob_ss_array = data_array[:, 0].reshape((N, N))
+        drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+        diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+
+        flux_array = zeros((2, N, N))
+        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+        flux_array = asarray(flux_array) / (dx * dx)
+
+        dflux_array = empty((2, N, N))
+        derivative_flux(flux_array, dflux_array, N, dx)
+
+        for i in range(N):
+            for j in range(N):
+                if prob_ss_array[i, j] == 0:
+                    prob_ss_array[i, j] = 10e-18
+
+        learning_rate = -dflux_array[1, ...] * log(prob_ss_array)
     except OSError:
         print('Missing file')
-        print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+        print(input_file_name.format(E0, amax(Ecouple_array_tot), E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-    prob_max = amax(prob_ss_array)
+    prob_max = amax(learning_rate)
+    prob_min = amin(learning_rate)
+    if abs(prob_min) > prob_max:
+        prob_max = -prob_min
 
-    for ii, Ecouple in enumerate(Ecouple_array):
+    # plots
+    for ii, Ecouple in enumerate(Ecouple_array_tot):
+        if Ecouple in Ecouple_array_peak:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        else:
+            input_file_name = (
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
@@ -1545,11 +1584,22 @@ def plot_2D_prob_flux():
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        # flux_array = zeros((2, N, N))
-        # calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
-        # flux_array = asarray(flux_array) / (dx * dx)
+        flux_array = zeros((2, N, N))
+        calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+        flux_array = asarray(flux_array) / (dx * dx)
 
-        ax1[ii].contourf(prob_ss_array.T, vmax=prob_max, cmap=plt.cm.cool)
+        dflux_array = empty((2, N, N))
+        derivative_flux(flux_array, dflux_array, N, dx)
+
+        for i in range(N):
+            for j in range(N):
+                if prob_ss_array[i, j] == 0:
+                    prob_ss_array[i, j] = 10e-18
+
+        learning_rate = -dflux_array[1, ...] * log(prob_ss_array)
+
+        cs = ax1[ii].contourf(learning_rate.T, linspace(-prob_max, prob_max, 200), cmap=plt.cm.coolwarm,
+                              norm=mc.Normalize(vmin=-prob_max, vmax=prob_max))
 
         # select fewer arrows to draw
         # M = 18  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
@@ -1578,8 +1628,19 @@ def plot_2D_prob_flux():
         ax1[ii].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
         ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
 
-    f1.tight_layout()
-    f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
+    cax = f1.add_axes([0.92, 0.1, 0.01, 0.85])
+    cbar = f1.colorbar(
+        cs, cax=cax, orientation='vertical', ax=ax1, ticks=[-4e-3, -2e-3, 0, 2e-3, 4e-3]
+    )
+    cbar.set_label(r'$\log \left( P^{\rm ss} \right) \partial_{\theta_1} J_1$', fontsize=16)
+    cbar.formatter.set_scientific(True)
+    cbar.formatter.set_powerlimits((0, 0))
+    # cbar.ax1.tick_params(labelsize=14)
+    # cbar.ax1.yaxis.offsetText.set_fontsize(14)
+    cbar.update_ticks()
+
+    # f1.tight_layout()
+    f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2), bbox_inches='tight')
 
 
 def plot_marginal_prob():
@@ -1775,7 +1836,7 @@ def plot_1D_flux():
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # flux_power_efficiency(target_dir)
-    heat_work_info(target_dir)
+    # heat_work_info(target_dir)
     # plot_power_Ecouple(target_dir)
     # plot_power_efficiency_Ecouple(target_dir)
     # plot_power_Ecouple_grid(target_dir)
@@ -1785,7 +1846,7 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    # plot_energy_flow(target_dir)
+    plot_energy_flow(target_dir)
     # plot_2D_prob()
     # plot_2D_prob_flux()
     # plot_marginal_prob()
