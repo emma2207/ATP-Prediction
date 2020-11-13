@@ -14,15 +14,15 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 2.0  # barrier height Fo
-E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -1.0  # chemical driving force on F1
+E0 = 0.0  # barrier height Fo
+E1 = 0.0  # barrier height F1
+psi_1 = 0.0  # chemical driving force on Fo
+psi_2 = 0.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
-Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])  # coupling strengths
-Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
@@ -285,13 +285,14 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
     phi = 0.0
 
     output_file_name = (
-            target_dir + "results/" + "MI_pred_MI_Ecouple_"
+            target_dir + "results/" + "Learning_rate_2ways_Ecouple_"
             + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
 
     for jj, E0 in enumerate(Barrier_heights):
         E1 = E0
+        # Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
         Ecouple_array_tot = Ecouple_array
         information = zeros((Ecouple_array_tot.size, 2))
 
@@ -330,22 +331,40 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
                 print('Missing file')
                 print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
-            step_X = empty((N, N))
-            step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+            # step_X = empty((N, N))
+            # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+            #
+            # # instantaneous memory
+            # mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+            # Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+            #
+            # # instantaneous predictive power
+            # pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+            # Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+            # information[ii, 0] = timescale * Imem / dt
+            # information[ii, 1] = timescale * Ipred / dt
 
-            # instantaneous memory
-            mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
-            Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+            for i in range(N):
+                for j in range(N):
+                    if prob_ss_array[i, j] == 0:
+                        prob_ss_array[i, j] = 10e-18
 
-            # instantaneous predictive power
-            pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
-            Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+            flux_array = zeros((2, N, N))
+            calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+            dflux_array = empty((2, N, N))
+            derivative_flux(flux_array, dflux_array, N, dx)
 
-            information[ii, 0] = timescale * Imem / dt
-            information[ii, 1] = timescale * Ipred / dt
-
-        ax.plot(Ecouple_array_tot, information[:, 0] - information[:, 1], 'o-', color='C0', label=r'diff', markersize=8)
-        # ax.plot(Ecouple_array_tot, information[:, 1], 'o-', color='C1', label=r'predictive', markersize=6)
+            information[ii, 0] = -trapz(trapz(
+                dflux_array[1, ...] * log(prob_ss_array)
+            )) * timescale
+            information[ii, 1] = -trapz(trapz(
+                dflux_array[0, ...] * log(prob_ss_array)
+            )) * timescale
+        ax.axhline(0, color='black')
+        ax.plot(Ecouple_array_tot, information[:, 0], 'o-', color='C0', label=r'$\ell_{\rm o \to 1}$', markersize=8)
+        ax.plot(Ecouple_array_tot, information[:, 1], 'o-', color='C1', label=r'$\ell_{\rm 1 \to o}$', markersize=6)
+        ax.plot(Ecouple_array_tot, information[:, 1] + information[:, 0], 'o-', color='C2',
+                label=r'$\ell_{\rm 1 \to o} + \ell_{\rm o \to 1}$', markersize=8)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)
@@ -354,14 +373,15 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
     # ax.set_yscale('log')
     # ax.set_ylim((0, None))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    ax.set_ylabel(r'$I(\theta_{\rm o}, \theta_1)$', fontsize=20)
+    ax.set_ylabel(r'$\ell$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
 
-    # leg = ax.legend(fontsize=16, loc='best', frameon=False)
-    leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
-    leg_title = leg.get_title()
-    leg_title.set_fontsize(20)
+    leg = ax.legend(fontsize=16, loc='best', frameon=False)
+    # leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
+    # leg_title = leg.get_title()
+    # leg_title.set_fontsize(20)
 
     # f.subplots_adjust(hspace=0.01)
     f.tight_layout()
@@ -1386,27 +1406,33 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
 
 def compare_info(target_dir):
     phi = 0.0
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    learning_rate = zeros(Ecouple_array_tot.size)
-    labels = ['normal', 'test']
-    sizes = [8, 6]
+    labels = ['old', 'new, N = 540', 'new, N = 720']
 
     output_file_name = (
-            target_dir + "results/" + "Learning_rate_comp_ss_Ecouple_"
-            + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
+            target_dir + "results/" + "Learning_rate_comp_Ecouple_"
+            + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_log.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
 
-    for i in range(2):
+    for i in range(3):
+        if i == 0:
+            Ecouple_array_tot = Ecouple_array
+            input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/"
+                                            "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                               "_outfile.dat")
+        elif i == 1:
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+            input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/"
+                                            "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                               "_outfile_N.dat")
+        else:
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+            input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/"
+                                            "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                               "_outfile_N720.dat")
+        learning_rate = zeros(Ecouple_array_tot.size)
+
         for ii, Ecouple in enumerate(Ecouple_array_tot):
-            if i == 0:
-                input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/"
-                                   "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
-                                   "_outfile.dat")
-            else:
-                input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/"
-                                   "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
-                                   "_outfile_ss_.dat")
             try:
                 data_array = loadtxt(
                     input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple), usecols=6)
@@ -1415,17 +1441,17 @@ def compare_info(target_dir):
                 print('Missing file')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
-        ax.plot(Ecouple_array_tot, learning_rate, '-o', markersize=sizes[i], label=labels[i])
+        ax.plot(Ecouple_array_tot, -learning_rate, '-o', markersize=8, label=labels[i])
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)
     ax.tick_params(axis='both', labelsize=16)
     ax.set_xscale('log')
-    # ax.set_yscale('log')
-    ax.set_ylim((-0, 3))
+    ax.set_yscale('log')
+    # ax.set_ylim((-0, 3))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
     # ax.set_ylabel(r'$\rm \dot{E}_{\rm o \to 1}$', fontsize=20)
-    # ax.set_ylabel(r'$\ell_{\rm o \to 1}$', fontsize=20)
+    ax.set_ylabel(r'$\ell_{\rm o \to 1}$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 

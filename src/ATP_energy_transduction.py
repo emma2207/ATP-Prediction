@@ -23,9 +23,9 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
-Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-Ecouple_array_double = array([11.31, 22.63, 45.25, 90.51]) # 2.83, 5.66
+Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51]) #
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
 
 Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
@@ -288,8 +288,8 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 def heat_work_info(target_dir):
     Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    psi1_array = array([2.0])
-    psi2_array = array([-1.78, -1.33, -1.6])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -303,12 +303,12 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200220_moregrid/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 
                     output_file_name = (target_dir + "data/200915_energyflows/" + "power_heat_info_" +
-                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile_N720.dat")
 
                     print("Calculating stuff for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
                           f"Ecouple = {Ecouple}, num_minima1 = {num_minima1}, num_minima2 = {num_minima2}")
@@ -1846,9 +1846,9 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    plot_energy_flow(target_dir)
+    # plot_energy_flow(target_dir)
     # plot_2D_prob()
-    # plot_2D_prob_flux()
+    plot_2D_prob_flux()
     # plot_marginal_prob()
     # plot_derivative_flux()
     # plot_1D_flux()
