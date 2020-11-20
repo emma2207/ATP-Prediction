@@ -14,8 +14,8 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 2.0  # barrier height Fo
-E1 = 2.0  # barrier height F1
+E0 = 0.0  # barrier height Fo
+E1 = 0.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
@@ -287,9 +287,9 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 
 def heat_work_info(target_dir):
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    psi1_array = array([4.0])
-    psi2_array = array([-2.0])
+    Ecouple_array_tot = Ecouple_array
+    psi1_array = array([0.0])
+    psi2_array = array([0.0])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -303,7 +303,7 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/2019-05-14/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 
@@ -1514,16 +1514,16 @@ def plot_2D_prob():
 def plot_2D_prob_flux():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Integrand_LR_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pss_flux_2D_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    Ecouple_array_tot = array([8.0, 10.0, 12.0, 14.0, 16.0, 22.0, 24.0, 32.0])
+    Ecouple_array_tot = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array_tot.size, figsize=(3.5*Ecouple_array_tot.size, 3))
 
     # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/2019-05-14" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     try:
         data_array = loadtxt(
@@ -1554,10 +1554,11 @@ def plot_2D_prob_flux():
         print('Missing file')
         print(input_file_name.format(E0, amax(Ecouple_array_tot), E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-    prob_max = amax(learning_rate)
-    prob_min = amin(learning_rate)
-    if abs(prob_min) > prob_max:
-        prob_max = -prob_min
+    prob_max = amax(prob_ss_array)
+    # prob_max = amax(learning_rate)
+    # prob_min = amin(learning_rate)
+    # if abs(prob_min) > prob_max:
+    #     prob_max = -prob_min
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array_tot):
@@ -1567,7 +1568,7 @@ def plot_2D_prob_flux():
                     "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         else:
             input_file_name = (
-                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+                    "/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/2019-05-14" +
                     "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
@@ -1598,19 +1599,20 @@ def plot_2D_prob_flux():
 
         learning_rate = -dflux_array[1, ...] * log(prob_ss_array)
 
-        cs = ax1[ii].contourf(learning_rate.T, linspace(-prob_max, prob_max, 200), cmap=plt.cm.coolwarm,
-                              norm=mc.Normalize(vmin=-prob_max, vmax=prob_max))
+        # cs = ax1[ii].contourf(learning_rate.T, linspace(-prob_max, prob_max, 200), cmap=plt.cm.coolwarm,
+        #                       norm=mc.Normalize(vmin=-prob_max, vmax=prob_max))
+        cs = ax1[ii].contourf(prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=prob_max)
 
         # select fewer arrows to draw
-        # M = 18  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
-        # fluxX = empty((M, M))
-        # fluxY = empty((M, M))
-        # for k in range(M):
-        #     fluxX[k] = flux_array[0, ...][int(N / M) * k, ::int(N / M)]
-        #     fluxY[k] = flux_array[1, ...][int(N / M) * k, ::int(N / M)]
-        #
-        # ax1[ii].quiver(positions[::int(N / M)]*(N/6), positions[::int(N / M)]*(N/6), fluxX.T, fluxY.T, units='xy',
-        #                angles='xy', scale_units='xy')
+        M = 18  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
+        fluxX = empty((M, M))
+        fluxY = empty((M, M))
+        for k in range(M):
+            fluxX[k] = flux_array[0, ...][int(N / M) * k, ::int(N / M)]
+            fluxY[k] = flux_array[1, ...][int(N / M) * k, ::int(N / M)]
+
+        ax1[ii].quiver(positions[::int(N / M)]*(N/6), positions[::int(N / M)]*(N/6), fluxX.T, fluxY.T, units='xy',
+                       angles='xy', scale_units='xy')
 
         if ii == 0:
             ax1[ii].set_title(r"$E_{\rm couple}$" + "={}".format(Ecouple))
@@ -1630,9 +1632,10 @@ def plot_2D_prob_flux():
 
     cax = f1.add_axes([0.92, 0.1, 0.01, 0.85])
     cbar = f1.colorbar(
-        cs, cax=cax, orientation='vertical', ax=ax1, ticks=[-4e-3, -2e-3, 0, 2e-3, 4e-3]
+        cs, cax=cax, orientation='vertical', ax=ax1#, ticks=[-4e-3, -2e-3, 0, 2e-3, 4e-3]
     )
-    cbar.set_label(r'$\log \left( P^{\rm ss} \right) \partial_{\theta_1} J_1$', fontsize=16)
+    # cbar.set_label(r'$\log \left( P^{\rm ss} \right) \partial_{\theta_1} J_1$', fontsize=16)
+    cbar.set_label(r'$P^{\rm ss}$', fontsize=16)
     cbar.formatter.set_scientific(True)
     cbar.formatter.set_powerlimits((0, 0))
     # cbar.ax1.tick_params(labelsize=14)
