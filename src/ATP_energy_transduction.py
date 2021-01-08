@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import matplotlib.colors as mc
 from utilities import step_probability_X, calc_flux_2, calc_derivative_pxgy, step_probability_Y
+from utilities_1d import calc_flux_1d
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 
@@ -214,7 +215,7 @@ def calc_derivative(flux_array, dflux_array, N, dx, k):
 
 
 def flux_power_efficiency(target_dir):  # processing of raw data
-    Ecouple_array = array([0.0, 1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    Ecouple_array = array([0.0])
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
     phase_array = array([0.0])
@@ -232,23 +233,23 @@ def flux_power_efficiency(target_dir):  # processing of raw data
                     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200914_reruns_n/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
-
                     output_file_name = (target_dir + "200914_reruns_n/" + "flux_power_efficiency_" +
                                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
-                    print("Calculating flux for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
-                          f"Ecouple = {Ecouple}, num_minima1 = {num_minima1}, num_minima2 = {num_minima2}")
+                    # print("Calculating flux for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
+                    #       f"Ecouple = {Ecouple}, num_minima1 = {num_minima1}, num_minima2 = {num_minima2}")
 
                     try:
-                        data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1,
-                                                                    num_minima2, phase_shift),
-                                             usecols=(0, 3, 4, 5, 6, 7, 8))
+                        data_array = loadtxt(input_file_name)
+                        # data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1,
+                        #                                             num_minima2, phase_shift),
+                        #                      usecols=(0, 3, 4, 5, 6, 7, 8))
                         N = int(sqrt(len(data_array)))  # check grid size
                         dx = 2 * math.pi / N  # spacing between gridpoints
                         positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
                         print('Grid size: ', N)
 
-                        prob_ss_array = data_array[:, 0].reshape((N, N))
+                        prob_ss_array = data_array[:, 0].reshape((N,N))
                         drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
                         diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
 
@@ -1965,7 +1966,7 @@ def plot_1D_flux():
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    # flux_power_efficiency(target_dir)
+    flux_power_efficiency(target_dir)
     # heat_work_info(target_dir)
     # plot_power_Ecouple(target_dir)
     # plot_power_efficiency_Ecouple(target_dir)
@@ -1979,7 +1980,7 @@ if __name__ == "__main__":
     # plot_energy_flow(target_dir)
     # plot_2D_prob()
     # plot_2D_prob_flux()
-    plot_2D_LR_energy()
+    # plot_2D_LR_energy()
     # plot_marginal_prob()
     # plot_derivative_flux()
     # plot_1D_flux()
