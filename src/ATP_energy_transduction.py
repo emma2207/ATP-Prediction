@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import matplotlib.colors as mc
 from utilities import step_probability_X, calc_flux_2, calc_derivative_pxgy, step_probability_Y
-from utilities_1d import calc_flux_1d
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 
@@ -1432,7 +1431,7 @@ def plot_energy_flow(target_dir):
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Step_X-Pss_2D_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pss_xgy_2D_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0])
@@ -1466,7 +1465,7 @@ def plot_2D_prob():
                 usecols=(0, 2, 3, 4, 5, 6, 7, 8))
             N = int(sqrt(len(data_array[:, 0])))  # check grid size
             potential_at_pos = data_array[:, 1].reshape((N, N))
-            prob_ss_array = data_array[:, 0].reshape((N, N))
+            prob_ss_array = data_array[:, 0].T.reshape((N, N))
             drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
             diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
             # integrate using axis=1 integrates out the y component, gives us P(x)
@@ -1487,26 +1486,26 @@ def plot_2D_prob():
         #     for j in range(N):
         #         force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
 
-        step_X = zeros((N, N))
-        step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
+        # step_X = zeros((N, N))
+        # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
 
-        ax1[ii].contourf(step_X - prob_ss_array)
+        ax1[ii].contourf((prob_ss_array/prob_ss_array.sum(axis=0)).T)
 
         if ii == 0:
-            ax1[ii].set_title(r"$E_{\rm couple}$" + "={}".format(Ecouple))
-            ax1[ii].set_ylabel(r'$\theta_{\rm o}$')
-            ax1[ii].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+            ax1[ii].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouple))
+            ax1[ii].set_ylabel(r'$\theta_1$ (rev)')
+            ax1[ii].set_yticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
         else:
             ax1[ii].set_title("{}".format(Ecouple))
             ax1[ii].set_yticklabels(['', '', '', '', '', '', ''])
-        ax1[ii].set_xlabel(r'$\theta_1$')
+        ax1[ii].set_xlabel(r'$\theta_{\rm o}$ (rev)')
         ax1[ii].spines['right'].set_visible(False)
         ax1[ii].spines['top'].set_visible(False)
         # ax1[ii].set_xticks([0, 60, 120, 180, 240, 300, 360])
         # ax1[ii].set_yticks([0, 60, 120, 180, 240, 300, 360])
         ax1[ii].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
         ax1[ii].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
-        ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        ax1[ii].set_xticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
 
     f1.tight_layout()
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -1966,7 +1965,7 @@ def plot_1D_flux():
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    flux_power_efficiency(target_dir)
+    # flux_power_efficiency(target_dir)
     # heat_work_info(target_dir)
     # plot_power_Ecouple(target_dir)
     # plot_power_efficiency_Ecouple(target_dir)
@@ -1978,7 +1977,7 @@ if __name__ == "__main__":
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
     # plot_energy_flow(target_dir)
-    # plot_2D_prob()
+    plot_2D_prob()
     # plot_2D_prob_flux()
     # plot_2D_LR_energy()
     # plot_marginal_prob()
