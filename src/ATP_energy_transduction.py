@@ -16,8 +16,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 4.0  # chemical driving force on Fo
-psi_2 = -2.0  # chemical driving force on F1
+psi_1 = 8.0  # chemical driving force on Fo
+psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -1433,31 +1433,31 @@ def plot_2D_prob():
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
             "Pss_xgy_2D_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
-    # Ecouple_array = array([8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 32.0])
+    # Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
+    Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(2.5 * Ecouple_array.size, 3))
 
     # Find max prob. to set plot range
     # input_file_name = (
-    #         "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+    #         "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
     #         "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     # try:
     #     data_array = loadtxt(
-    #         input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
+    #         input_file_name.format(E0, 24.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
     #     N = int(sqrt(len(data_array)))
     #     prob_ss_array = data_array.reshape((N, N))
     # except OSError:
     #     print('Missing file')
-    #     print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+    #     print(input_file_name.format(E0, 24.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
     #
     # prob_max = amax(prob_ss_array)
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
         input_file_name = (
-                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
                 "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
@@ -1489,7 +1489,7 @@ def plot_2D_prob():
         # step_X = zeros((N, N))
         # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
 
-        ax1[ii].contourf((prob_ss_array/prob_ss_array.sum(axis=0)).T)
+        ax1[ii].contourf((prob_ss_array/prob_ss_array.sum(axis=0)).T, vmin=0, vmax=0.03)
 
         if ii == 0:
             ax1[ii].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouple))
