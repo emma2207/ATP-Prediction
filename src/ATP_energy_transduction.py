@@ -18,7 +18,7 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 8.0  # chemical driving force on Fo
 psi_2 = -4.0  # chemical driving force on F1
-num_minima1 = 3.0  # number of barriers in Fo's landscape
+num_minima1 = 12.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
@@ -1351,15 +1351,14 @@ def calc_heat_flow():
 
 def plot_energy_flow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([2.0])
-    psi2_array = array([-1.0])
-    barrier_height = array([4.0])
-
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
+    barrier_height = array([2.0])
     input_file_name = (target_dir + "data/200915_energyflows/" + "E0_{0}_E1_{1}/" + "n1_{4}_n2_{5}/" +
                        "power_heat_info_" +
-                       "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile_N720.dat")
-    output_file_name = (target_dir + "results/" + "Power_learningrate_Ecouple_" +
-                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_N720_log.pdf")
+                       "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+    output_file_name = (target_dir + "results/" + "Heatflow_Ecouple_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1370,7 +1369,7 @@ def plot_energy_flow(target_dir):
                 if E0 == 0.0:
                     Ecouple_array_total = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
                 else:
-                    Ecouple_array_total = array([0.0, 1.41, 2.0, 2.83, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+                    Ecouple_array_total = array([1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
 
                 power_x = empty(Ecouple_array_total.size)
                 power_y = empty(Ecouple_array_total.size)
@@ -1397,13 +1396,13 @@ def plot_energy_flow(target_dir):
                 ax.axhline(0, color='black')
                 # ax.axhline(1, color='grey')
 
-                ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta P_{\rm H^+}$', color='tab:blue')
-                ax.plot(Ecouple_array_total, -power_y, '-o', label=r'$-\beta P_{\rm ATP}$', color='tab:orange')
-                # ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
-                # ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
+                # ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta P_{\rm H^+}$', color='tab:blue')
+                # ax.plot(Ecouple_array_total, -power_y, '-o', label=r'$-\beta P_{\rm ATP}$', color='tab:orange')
+                ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
+                ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
                 # ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\dot{E}_{\rm o \to 1}$', color='tab:purple')
-                ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
-                        label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
+                # ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
+                #         label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
                 # ax.plot(Ecouple_array_total, heat_x + power_x, '-o',
                 #         label=r'$J_{\rm o} \partial_{\theta_{\rm o}} V$', color='tab:olive')
                 # ax.plot(Ecouple_array_total, -heat_y - power_y, '-o',
@@ -1414,7 +1413,7 @@ def plot_energy_flow(target_dir):
             ax.spines['top'].set_visible(False)
             ax.spines['bottom'].set_visible(False)
             ax.set_xscale('log')
-            ax.set_yscale('log')
+            # ax.set_yscale('log')
             ax.set_xlabel(r'$E_{\rm couple}$', fontsize=14)
             # ax.set_ylabel(r'$\ell_{\rm o \to 1}$', fontsize=14)
             # ax.set_ylabel(r'$\dot{Q}_1 / \dot{E}_{\rm o \to 1}$', fontsize=14)
@@ -1976,8 +1975,8 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    # plot_energy_flow(target_dir)
-    plot_2D_prob()
+    plot_energy_flow(target_dir)
+    # plot_2D_prob()
     # plot_2D_prob_flux()
     # plot_2D_LR_energy()
     # plot_marginal_prob()
