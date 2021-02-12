@@ -44,7 +44,6 @@ def calc_marg_derivative(flux_array, dflux_array, N, dx):
 
 def calc_derivative(flux_array, dflux_array, N, dx, k):
     if k == 0:
-        # explicit update of the corners
         dflux_array[0, 0] = (flux_array[1, 0] - flux_array[N - 1, 0]) / (2.0 * dx)
         dflux_array[0, N - 1] = (flux_array[1, N - 1] - flux_array[N - 1, N - 1]) / (2.0 * dx)
         dflux_array[N - 1, 0] = (flux_array[0, 0] - flux_array[N - 2, 0]) / (2.0 * dx)
@@ -391,26 +390,30 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
 def plot_learning_rates_Ecouple(target_dir):
     phi = 0.0
     barrier_heights = [2.0]
+    gridpoints = ['360', '720']
 
-    output_file_name = (target_dir + "results/" + "LearningRate_Ecouple_" +
+    output_file_name = (target_dir + "results/" + "LearningRate_Ecouple_N_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
     ax.axhline(0, color='black')
 
-    for i, E0 in enumerate(barrier_heights):
-        E1 = E0
-        if E0 == 0.0:
-            Ecouple_array_tot = array([2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
+    for i, points in enumerate(gridpoints):
+        Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
+
+        if i == 0:
+            input_file_name = (
+                    target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
+                    "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                    "_outfile.dat")
         else:
-            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+            input_file_name = (
+                    target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
+                    "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
+                    "_outfile_N720.dat")
 
         learning_rate = zeros(Ecouple_array_tot.size)
         for ii, Ecouple in enumerate(Ecouple_array_tot):
-            input_file_name = (
-                        target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
-                        "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
-                        "_outfile.dat")
             try:
                 data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
                 learning_rate[ii] = data_array[6]
@@ -419,10 +422,7 @@ def plot_learning_rates_Ecouple(target_dir):
                 print('Missing file')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
-        if E0 == 0.0:
-            ax.plot(Ecouple_array_tot, -learning_rate, 'o-', markersize=8, label=barrier_heights[i])
-        else:
-            ax.plot(Ecouple_array_tot, learning_rate, 'o-', markersize=8, label=barrier_heights[i], color='tab:orange')
+        ax.plot(Ecouple_array_tot, learning_rate, 'o-', markersize=8, label=points)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)
@@ -432,12 +432,12 @@ def plot_learning_rates_Ecouple(target_dir):
     # ax.set_ylim((10e-1, 10e1))
     ax.set_ylim((0, None))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    ax.set_ylabel(r'$\ell_{\rm o \to 1} (\rm nats/s)$', fontsize=20)
+    ax.set_ylabel(r'$\ell_1 (\rm nats/s)$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
 
     leg = ax.legend(fontsize=16, loc='best', frameon=False)
-    leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
+    leg = ax.legend(title=r'N', fontsize=16, loc='best', frameon=False)
     leg_title = leg.get_title()
     leg_title.set_fontsize(20)
 
@@ -1406,7 +1406,7 @@ def plot_nn_learning_rate_phi(input_dir, dt):  # plot power and efficiency as a 
 
 def compare_info(target_dir):
     phi = 0.0
-    labels = ['nostalgia', '$\partial_1 J$', 'Conditional entropy']
+    labels = ['nostalgia', '$\partial_1 J$', 'Conditional entropy', '$\partial_1 \log P$']
     Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
     learning_rate = zeros((4, Ecouple_array_tot.size))
     dt = 5e-2
@@ -1463,7 +1463,28 @@ def compare_info(target_dir):
         cond = dflux_array[1, ...] * (log(step_X / step_X.sum(axis=0)) + 1)
         learning_rate[2, ii] = -trapz(trapz(cond)) * timescale
 
-    for i in range(3):
+        Hcouple = empty((N, N))
+        # learning rate try 3
+        for i in range(N):
+            for j in range(N):
+                if prob_ss_array[i, j] == 0:
+                    prob_ss_array[i, j] = 10**(-18)
+
+                Hcouple[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
+
+        dPxy = empty((N, N))
+        calc_derivative(prob_ss_array, dPxy, N, dx, 1)
+
+        Py = prob_ss_array.sum(axis=0)
+        Pxgy = prob_ss_array/Py
+        dPxgy = empty((N, N))
+        calc_derivative(Pxgy, dPxgy, N, dx, 1)
+
+        learning = prob_ss_array * (Hcouple + (dPxy/prob_ss_array)) * (dPxgy/Pxgy)
+
+        learning_rate[3, ii] = -trapz(trapz(learning)) * timescale * 10**(-3)
+
+    for i in range(4):
         ax.plot(Ecouple_array_tot, learning_rate[i, :], '-o', markersize=8, label=labels[i])
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
