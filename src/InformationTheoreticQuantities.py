@@ -1408,14 +1408,14 @@ def compare_info(target_dir):
     phi = 0.0
     labels = ['nostalgia', '$\partial_1 J$', 'Conditional entropy', '$\partial_1 \log P$']
     Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
-    learning_rate = zeros((4, Ecouple_array_tot.size))
+    learning_rate = zeros((4, 2, Ecouple_array_tot.size))
     dt = 5e-2
 
     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip/" +
                         "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                         "_outfile.dat")
     output_file_name = (
-            target_dir + "results/" + "Learning_rate_comp_Ecouple_"
+            target_dir + "results/" + "Learning_rate_split_dlogP_Ecouple_"
             + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_log.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
@@ -1437,32 +1437,35 @@ def compare_info(target_dir):
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
         # nostalgia
-        step_X = empty((N, N))
-        step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+        # step_X = empty((N, N))
+        # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+        #
+        # mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+        # Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+        #
+        # pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+        # Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
 
-        mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
-        Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+        # learning_rate[0, ii] = timescale * (Imem - Ipred) / dt
 
-        pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
-        Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
-
-        learning_rate[0, ii] = timescale * (Imem - Ipred) / dt
+        # learning_rate[0, 0, ii] = timescale * (Imem) / dt
+        # learning_rate[0, 1, ii] = timescale * (Ipred) / dt
 
         # leanring rate try 1
-        flux_array = empty((2, N, N))
-        calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
-
-        dflux_array = empty((2, N, N))
-        derivative_flux(flux_array, dflux_array, N, dx)
-
-        learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0) / prob_ss_array)
-
-        learning_rate[1, ii] = trapz(trapz(learning)) * timescale
-
-        # learning rate try 2
-        cond = dflux_array[1, ...] * (log(step_X / step_X.sum(axis=0)) + 1)
-        learning_rate[2, ii] = -trapz(trapz(cond)) * timescale
-
+        # flux_array = empty((2, N, N))
+        # calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+        #
+        # dflux_array = empty((2, N, N))
+        # derivative_flux(flux_array, dflux_array, N, dx)
+        #
+        # learning = dflux_array[1, ...] * log(prob_ss_array.sum(axis=0) / prob_ss_array)
+        #
+        # learning_rate[1, ii] = trapz(trapz(learning)) * timescale
+        #
+        # # learning rate try 2
+        # cond = dflux_array[1, ...] * (log(step_X / step_X.sum(axis=0)) + 1)
+        # learning_rate[2, ii] = -trapz(trapz(cond)) * timescale
+        #
         Hcouple = empty((N, N))
         # learning rate try 3
         for i in range(N):
@@ -1480,12 +1483,16 @@ def compare_info(target_dir):
         dPxgy = empty((N, N))
         calc_derivative(Pxgy, dPxgy, N, dx, 1)
 
-        learning = prob_ss_array * (Hcouple + (dPxy/prob_ss_array)) * (dPxgy/Pxgy)
+        # learning = prob_ss_array * (Hcouple + (dPxy/prob_ss_array)) * (dPxgy/Pxgy)
+        #
+        # learning_rate[3, ii] = -trapz(trapz(learning)) * timescale * 10**(-3)
 
-        learning_rate[3, ii] = -trapz(trapz(learning)) * timescale * 10**(-3)
+        learning_rate[3, 0, ii] = -trapz(trapz(prob_ss_array * Hcouple * (dPxgy/Pxgy))) * timescale * 10 ** (-3)
+        learning_rate[3, 1, ii] = trapz(trapz(prob_ss_array * (dPxy/prob_ss_array) * (dPxgy/Pxgy))) * timescale * 10 ** (-3)
 
-    for i in range(4):
-        ax.plot(Ecouple_array_tot, learning_rate[i, :], '-o', markersize=8, label=labels[i])
+    # for i in range(4):
+    ax.plot(Ecouple_array_tot, learning_rate[3, 0, :], '-o', markersize=8, label='Hcouple')
+    ax.plot(Ecouple_array_tot, learning_rate[3, 1, :], '-o', markersize=6, label='dP')
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)

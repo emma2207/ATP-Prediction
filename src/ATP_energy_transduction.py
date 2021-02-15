@@ -18,7 +18,7 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 8.0  # chemical driving force on Fo
 psi_2 = -4.0  # chemical driving force on F1
-num_minima1 = 3.0  # number of barriers in Fo's landscape
+num_minima1 = 12.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
@@ -287,7 +287,7 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 
 def heat_work_info(target_dir):
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak)))
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
     psi1_array = array([8.0])
     psi2_array = array([-4.0])
     phase_array = array([0.0])
@@ -303,12 +303,12 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                     output_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/ " +
                                         "power_heat_info_" +
-                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile_N720.dat")
+                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
                     print("Calculating stuff for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
                           f"Ecouple = {Ecouple}, num_minima1 = {num_minima1}, num_minima2 = {num_minima2}")
