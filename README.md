@@ -15,6 +15,9 @@ Actual simulation in cython to speed it up.
 - [setup.py](https://github.com/emma2207/ATP-Prediction/src/setup.py) 
 Compiling the code
 
+To compile the code navigate to the folder containing these files, and in a terminal run 
+'python setup.py build\_ext= --inplace'. 
+
 
 #### Running and submitting jobs
 - [production_slurm.sh](https://github.com/emma2207/ATP-Prediction/src/production_slurm.sh)
@@ -23,6 +26,10 @@ Necessary info to submit job to the cluster.
 Script to build the folder structure for all the jobs you want to run and copy the simulation files into each folder.
 - [parallel_submit_slurm.sh](https://github.com/emma2207/ATP-Prediction/src/parallel_submit_slurm.sh)
 Script to submit jobs to the cluster.
+
+In order to get the code to compile on the cluster use 'module load gcc/5.4.0' and 'module load scipy-stack/2019a' 
+before compiling using the setup file.
+
  
 ### Analysis
 - [ATP\_energy\_transduction.py](https://github.com/emma2207/ATP-Prediction/src/ATP_energy_transduction.py) 

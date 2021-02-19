@@ -21,14 +21,12 @@ psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
-Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
-Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
+
+Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
-# Ecouple_array = array([0.0, 1.0, 1.19, 1.41, 1.68, 2.0, 2.38, 2.83, 3.36, 4.0, 4.76, 5.66, 6.73, 8.0, 9.51, 10.0, 11.31,
-#                        12.0, 13.45, 14.0, 16.0, 18.0, 19.03, 20.0, 22.0, 22.63, 24.0, 26.91, 32.0, 38.05, 45.25, 53.82,
-#                        64.0, 76.11, 90.51, 107.63, 128.0])
 Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
 
 
@@ -279,21 +277,21 @@ def plot_ITQ_Ecouple(target_dir, quantity, dt):  # grid of plots of the flux as 
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
 
-def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function of the phase offset
-    Barrier_heights = [0.0]
+def plot_MI_Ecouple(target_dir, dt):
+    Barrier_heights = [2.0]
     phi = 0.0
+    timestep = array([dt/100, dt/10, dt/2, dt, 2*dt, 10*dt, 100*dt])
 
     output_file_name = (
-            target_dir + "results/" + "Learning_rate_2ways_Ecouple_"
+            target_dir + "results/" + "LearningRate_Ecouple_dt_"
             + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n0_{4}_n1_{5}_phi_{6}" + "_.pdf")
 
     f, ax = plt.subplots(1, 1, sharex='all', sharey='none', figsize=(8, 6))
 
     for jj, E0 in enumerate(Barrier_heights):
         E1 = E0
-        # Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-        Ecouple_array_tot = Ecouple_array
-        information = zeros((Ecouple_array_tot.size, 2))
+        Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
+        information = zeros((Ecouple_array_tot.size, timestep.size))
 
         for ii, Ecouple in enumerate(Ecouple_array_tot):
             if E1 == 0.0:
@@ -301,18 +299,13 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
                                    "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                    "_outfile.dat")
             elif E1 == 2.0:
-                if Ecouple in Ecouple_array:
+                if Ecouple in Ecouple_extra:
                     input_file_name = (
-                                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" +
-                                "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-                                "_outfile.dat")
-                elif Ecouple in array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0]):
-                    input_file_name = (
-                                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190610_Extra_measurements_Ecouple/" +
+                                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200511_2kT_extra/" +
                                 "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                 "_outfile.dat")
                 else:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200427_strongforces/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
             try:
@@ -330,40 +323,27 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
                 print('Missing file')
                 print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
-            # step_X = empty((N, N))
-            # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
-            #
-            # # instantaneous memory
-            # mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
-            # Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
-            #
-            # # instantaneous predictive power
-            # pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
-            # Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
-            # information[ii, 0] = timescale * Imem / dt
-            # information[ii, 1] = timescale * Ipred / dt
-
-            for i in range(N):
-                for j in range(N):
-                    if prob_ss_array[i, j] == 0:
+            for j in range(N):
+                for i in range(N):
+                    if prob_ss_array[i, j] == 0.0:
                         prob_ss_array[i, j] = 10e-18
 
-            flux_array = zeros((2, N, N))
-            calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
-            dflux_array = empty((2, N, N))
-            derivative_flux(flux_array, dflux_array, N, dx)
+            for j, dt in enumerate(timestep):
+                step_X = empty((N, N))
+                step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
 
-            information[ii, 0] = -trapz(trapz(
-                dflux_array[1, ...] * log(prob_ss_array)
-            )) * timescale
-            information[ii, 1] = -trapz(trapz(
-                dflux_array[0, ...] * log(prob_ss_array)
-            )) * timescale
-        ax.axhline(0, color='black')
-        ax.plot(Ecouple_array_tot, information[:, 0], 'o-', color='C0', label=r'$\ell_{\rm o \to 1}$', markersize=8)
-        ax.plot(Ecouple_array_tot, information[:, 1], 'o-', color='C1', label=r'$\ell_{\rm 1 \to o}$', markersize=6)
-        ax.plot(Ecouple_array_tot, information[:, 1] + information[:, 0], 'o-', color='C2',
-                label=r'$\ell_{\rm 1 \to o} + \ell_{\rm o \to 1}$', markersize=8)
+                # instantaneous memory
+                mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+                Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+                # instantaneous predictive power
+                pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+                Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+                information[ii, j] = timescale * (Imem - Ipred) / dt
+
+        # ax.axhline(0, color='black')
+        for j, dt in enumerate(timestep):
+            ax.plot(Ecouple_array_tot, information[:, j], 'o-', label=dt, markersize=8)
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     ax.yaxis.offsetText.set_fontsize(14)
@@ -372,15 +352,15 @@ def plot_MI_Ecouple(target_dir, dt):  # grid of plots of the flux as a function 
     # ax.set_yscale('log')
     # ax.set_ylim((0, None))
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    ax.set_ylabel(r'$\ell$', fontsize=20)
+    ax.set_ylabel(r'$\ell_1$', fontsize=20)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
+    # ax.spines['bottom'].set_visible(False)
 
-    leg = ax.legend(fontsize=16, loc='best', frameon=False)
+    leg = ax.legend(fontsize=16, loc='best', frameon=False, title='$\Delta t$')
     # leg = ax.legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=16, loc='best', frameon=False)
-    # leg_title = leg.get_title()
-    # leg_title.set_fontsize(20)
+    leg_title = leg.get_title()
+    leg_title.set_fontsize(20)
 
     # f.subplots_adjust(hspace=0.01)
     f.tight_layout()
@@ -445,18 +425,14 @@ def plot_learning_rates_Ecouple(target_dir):
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
 
-def plot_nostalgia_Ecouple_grid(target_dir, quantity):  # grid of plots of the flux as a function of the phase offset
+def plot_nostalgia_Ecouple_grid(target_dir):  # grid of plots of the flux as a function of the phase offset
     psi1_array = array([2.0, 4.0, 6.0, 8.0])
     psi_ratio = array([8, 4, 2, 1.5, 1.25, 1.125])
     phi = 0.0
 
-    if quantity == 'nostalgia':
-        output_file_name = (
-                target_dir + "results/" + "Nostalgia_Ecouple_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_.pdf")
-    elif quantity == 'learning_rate':
-        output_file_name = (
-                target_dir + "results/" + "LearningRate_Ecouple_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" +
-                "_.pdf")
+    output_file_name = (
+            target_dir + "results/" + "LearningRate_Ecouple_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" +
+            "_.pdf")
 
     f, axarr = plt.subplots(psi1_array.size, psi_ratio.size, sharex='all', sharey='all',
                             figsize=(3*psi1_array.size, psi_ratio.size))
@@ -500,6 +476,7 @@ def plot_nostalgia_Ecouple_grid(target_dir, quantity):  # grid of plots of the f
             axarr[i, j].spines['top'].set_visible(False)
             axarr[i, j].set_ylim((0, 3.4))
             axarr[i, j].set_xlim((2, None))
+            axarr[i, j].set_xticks((10, 100))
 
             if j == 0 and i > 0:
                 axarr[i, j].yaxis.offsetText.set_fontsize(0)
@@ -511,17 +488,12 @@ def plot_nostalgia_Ecouple_grid(target_dir, quantity):  # grid of plots of the f
                 axarr[i, j].yaxis.set_label_position('right')
 
             if i == 0:
-                axarr[i, j]. set_title(r'$%.2f$' % psi_ratio[j], fontsize=18)
+                axarr[i, j].set_title(r'$%.2f$' % psi_ratio[j], fontsize=18)
 
     f.tight_layout()
     f.subplots_adjust(bottom=0.12, left=0.12, right=0.9, top=0.88, wspace=0.1, hspace=0.1)
     f.text(0.5, 0.02, r'$\beta E_{\rm couple}$', ha='center', fontsize=24)
-    if quantity == 'nostalgia':
-        f.text(0.01, 0.5, r'$I_{\rm mem} - I_{\rm pred}$', va='center', rotation='vertical',
-               fontsize=24)
-    elif quantity == 'learning_rate':
-        f.text(0.05, 0.5, r'$\ell_{\rm o \to 1} (\rm nats/s)$', va='center', rotation='vertical',
-               fontsize=24)
+    f.text(0.05, 0.5, r'$\ell_{\rm o \to 1} (\rm nats/s)$', va='center', rotation='vertical', fontsize=24)
     f.text(0.5, 0.95, r'$-\mu_{\rm H^+} / \mu_{\rm ATP}$', ha='center', rotation=0, fontsize=24)
     f.text(0.95, 0.5, r'$\mu_{\rm H^+}\ (k_{\rm B} T / \rm rad)$', va='center', rotation=270, fontsize=24)
     f.savefig(output_file_name.format(E0, E1, num_minima1, num_minima2, phi))
@@ -1270,7 +1242,7 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
 def plot_n0_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency as a function of the coupling strength
     markerlst = ['D', 's', 'o', 'v', 'x']
     color_lst = ['C2', 'C3', 'C1', 'C4', 'C6']
-    Ecouple_array_tot = array([1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
     phi = 0.0
     learning_rate = zeros((Ecouple_array_tot.size, min_array.size))
 
@@ -1283,7 +1255,7 @@ def plot_n0_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     # Fokker-Planck results (barriers)
     for j, num_min in enumerate(min_array):
         for ii, Ecouple in enumerate(Ecouple_array_tot):
-            input_file_name = input_dir + "data/200915_energyflows/" + \
+            input_file_name = input_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + \
                               "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + \
                               "_outfile.dat"
             try:
@@ -1302,7 +1274,7 @@ def plot_n0_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     axarr.yaxis.offsetText.set_fontsize(16)
     axarr.tick_params(axis='both', labelsize=16)
     axarr.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    axarr.set_ylabel(r'$\ell_{\rm F_o \to F_1} (\rm nats \cdot s^{-1})$', fontsize=20)
+    axarr.set_ylabel(r'$\ell_1 (\rm nats \cdot s^{-1})$', fontsize=20)
     axarr.spines['right'].set_visible(False)
     axarr.spines['top'].set_visible(False)
     axarr.set_xscale('log')
@@ -1522,7 +1494,7 @@ if __name__ == "__main__":
     # plot_MI_Ecouple(target_dir, 5e-2)
     # dt = 0.001 is the standard used in the simulations.
     # plot_learning_rates_Ecouple(target_dir)
-    # plot_nostalgia_Ecouple_grid(target_dir, 'learning_rate')  # options 'nostalgia', 'learning_rate'
+    plot_nostalgia_Ecouple_grid(target_dir)
     # plot_correlation_nostalgia_power_peaks(target_dir)
     # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
     # plot_super_grid(target_dir, 5e-2)
@@ -1531,4 +1503,4 @@ if __name__ == "__main__":
     # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
     # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
-    compare_info(target_dir)
+    # compare_info(target_dir)
