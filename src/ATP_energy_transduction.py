@@ -1,5 +1,5 @@
 from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, amax, \
-    concatenate, sort, roll, amin, cos
+    concatenate, sort, roll, amin, cos, exp
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -9,21 +9,21 @@ rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 
 
-N = 360  # N x N grid is used for Fokker-Planck simulations
+N = 540  # N x N grid is used for Fokker-Planck simulations
 dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 4.0  # chemical driving force on Fo
-psi_2 = -2.0  # chemical driving force on F1
-num_minima1 = 12.0  # number of barriers in Fo's landscape
+psi_1 = 8.0  # chemical driving force on Fo
+psi_2 = -4.0  # chemical driving force on F1
+num_minima1 = 1.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
-Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
@@ -1963,7 +1963,7 @@ def plot_1D_flux():
 def plot_2D_prob_ss_eq():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_Peq_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Cond_Pss_Peq_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
@@ -1973,7 +1973,7 @@ def plot_2D_prob_ss_eq():
 
     # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200914_reruns_n/" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n/" +
             "reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     try:
         data_array = loadtxt(
@@ -1982,29 +1982,30 @@ def plot_2D_prob_ss_eq():
         prob_eq_array = data_array.reshape((N, N))
     except OSError:
         print('Missing file')
-        print(input_file_name.format(E0, 24.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+        print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-    prob_max = amax(prob_eq_array)
+    prob_max = amax(prob_eq_array/prob_eq_array.sum(axis=0))
     print(prob_max)
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
         input_file_name = (
-                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200914_reruns_n/" +
+                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n/" +
                 "reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
                 usecols=(0, 1))
             N = int(sqrt(len(data_array[:, 0])))  # check grid size
-            prob_ss_array = data_array[:, 0].T.reshape((N, N))
-            prob_eq_array = data_array[:, 1].T.reshape((N, N))
+            prob_ss_array = data_array[:, 0].reshape((N, N)).T
+            prob_eq_array = data_array[:, 1].reshape((N, N)).T
+            print(num_minima1, num_minima2)
         except OSError:
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ax1[0, ii].contourf(prob_ss_array, vmin=0, vmax=prob_max)
-        ax1[1, ii].contourf(prob_eq_array, vmin=0, vmax=prob_max)
+        ax1[0, ii].contourf(prob_ss_array/prob_ss_array.sum(axis=0), vmin=0, vmax=prob_max)
+        ax1[1, ii].contourf(prob_eq_array/prob_eq_array.sum(axis=0), vmin=0, vmax=prob_max)
 
         for jj in range(2):
             if ii == 0:

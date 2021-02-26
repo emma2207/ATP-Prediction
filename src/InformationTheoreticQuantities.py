@@ -1192,8 +1192,7 @@ def plot_super_grid_phi(target_dir, dt):  # grid of plots of output power, dissi
 def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency as a function of the coupling strength
     markerlst = ['D', 's', 'o', 'v', 'x', 'p']
     color_lst = ['C2', 'C3', 'C1', 'C4', 'C6', 'C6']
-    Ecouple_array_tot = array([1.41, 2.0, 2.83, 4.0, 5.66, 8.0, 11.31, 16.0, 22.63, 32.0, 45.25, 64.0, 90.51, 128.0])
-    # Ecouple_array_tot = array([4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
     phi = 0.0
     learning_rate = zeros((Ecouple_array_tot.size, min_array.size))
 
@@ -1201,20 +1200,20 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     axarr.axhline(0, color='black', label='_nolegend_')
 
     output_file_name = input_dir + "results/" + \
-                       "Learning_rate_Ecouple_nn_scaled_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log_.pdf"
+                       "Learning_rate_Ecouple_n0_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log_.pdf"
 
     # Fokker-Planck results (barriers)
     for j, num_min in enumerate(min_array):
         for ii, Ecouple in enumerate(Ecouple_array_tot):
-            input_file_name = target_dir + "data/200915_energyflows/" + \
+            input_file_name = target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + \
                               "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + \
                               "_outfile.dat"
             try:
-                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
+                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_min, 3.0, Ecouple))
                 learning_rate[ii, j] = data_array[6]
             except OSError:
                 print('Missing file')
-                print(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
+                print(input_file_name.format(E0, E1, psi_1, psi_2, num_min, 3.0, Ecouple))
 
         axarr.plot(Ecouple_array_tot, learning_rate[:, j],
                    color=color_lst[j], label=num_min, markersize=6, marker=markerlst[j], linestyle='-')
@@ -1224,13 +1223,13 @@ def plot_nn_learning_rate_Ecouple(input_dir, dt):  # plot power and efficiency a
     axarr.yaxis.offsetText.set_fontsize(16)
     axarr.tick_params(axis='both', labelsize=16)
     axarr.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    axarr.set_ylabel(r'$\ell_{\rm F_o \to F_1} (\rm nats \cdot s^{-1})$', fontsize=20)
+    axarr.set_ylabel(r'$\ell_1 \, (\rm nats/ s)$', fontsize=20)
     axarr.spines['right'].set_visible(False)
     axarr.spines['top'].set_visible(False)
     axarr.set_xscale('log')
     # axarr.set_yscale('log')
 
-    leg = axarr.legend(['$1$', '$2$', '$3$', '$6$', '$12$'], title=r'$n_{\rm o} = n_1$', fontsize=14,
+    leg = axarr.legend(['$1$', '$2$', '$3$', '$6$', '$12$'], title=r'$n_1$', fontsize=14,
                        loc='best', frameon=False)
     leg_title = leg.get_title()
     leg_title.set_fontsize(16)
@@ -1494,13 +1493,13 @@ if __name__ == "__main__":
     # plot_MI_Ecouple(target_dir, 5e-2)
     # dt = 0.001 is the standard used in the simulations.
     # plot_learning_rates_Ecouple(target_dir)
-    plot_nostalgia_Ecouple_grid(target_dir)
+    # plot_nostalgia_Ecouple_grid(target_dir)
     # plot_correlation_nostalgia_power_peaks(target_dir)
     # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
     # plot_super_grid(target_dir, 5e-2)
     # plot_super_grid_peak(target_dir, 5e-2)
     # plot_super_grid_phi(target_dir, 5e-2)
-    # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
+    plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
     # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
     # compare_info(target_dir)
