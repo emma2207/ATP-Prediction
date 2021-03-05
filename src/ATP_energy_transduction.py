@@ -18,7 +18,7 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 8.0  # chemical driving force on Fo
 psi_2 = -4.0  # chemical driving force on F1
-num_minima1 = 1.0  # number of barriers in Fo's landscape
+num_minima1 = 2.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
@@ -1773,73 +1773,56 @@ def plot_2D_prob_flux():
 def plot_marginal_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pcond_4_difference_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_theta_{6}" + "_.pdf")
+            "Pcond_ygx_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    angles = [0, 1]  # index from 0 to 359 gives the position of \theta_o
-
-    Ecouple_array_select = array([2.0, 10.0, 16.0, 22.63, 128.0])
+    Ecouple_array_select = array([0.0, 4.0, 16.0])
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array_select.size, figsize=(3 * Ecouple_array_select.size, 3), sharey='all')
 
-    for j in angles:
-        print(j)
+    for ii, Ecouple in enumerate(Ecouple_array_select):
+        # if Ecouple in Ecouple_array_peak:
+        input_file_name = (
+                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n" +
+                "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+        try:
+            data_array = loadtxt(
+                input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
+                usecols=(0, 2, 3, 4, 5, 6, 7, 8))
+            N = int(sqrt(len(data_array)))  # check grid size
+            dx = 2 * math.pi / N
+            positions = linspace(0, 2 * math.pi - dx, N)
+            prob_ss_array = data_array[:, 0].reshape((N, N))
+            drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+            diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+            # # integrate using axis=1 integrates out the y component, gives us P(x)
+            prob_ss_x = prob_ss_array.sum(axis=1)
+            prob_ss_y = prob_ss_array.sum(axis=0)
+        except OSError:
+            print('Missing file')
+            print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ##plots
-        for ii, Ecouple in enumerate(Ecouple_array_select):
-            # if Ecouple in Ecouple_array_peak:
-            input_file_name = (
-                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip" +
-                    "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
-            # else:
-            #     input_file_name = (
-            #             "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
-            #             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
-            try:
-                data_array = loadtxt(
-                    input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
-                    usecols=(0, 2, 3, 4, 5, 6, 7, 8))
-                N = int(sqrt(len(data_array)))  # check grid size
-                dx = 2 * math.pi / N
-                positions = linspace(0, 2 * math.pi - dx, N)
-                prob_ss_array = data_array[:, 0].reshape((N, N))
-                drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
-                diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
-                # # integrate using axis=1 integrates out the y component, gives us P(x)
-                # prob_ss_x = trapz(prob_ss_array, axis=1, dx=1/dx)
-                # prob_ss_y = trapz(prob_ss_array, axis=0, dx=1/dx)
-            except OSError:
-                print('Missing file')
-                print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+        ax1[ii].axhline(0, color='black')
+        ax1[ii].plot(positions, prob_ss_array[0]/prob_ss_y)
 
-            # flux_array = zeros((2, N, N))
-            # calc_flux(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N)
-            # flux_array = asarray(flux_array) / (dx * dx)
+        # ax1[ii].plot(positions, step_X[j, :]/step_X.sum(axis=0), '--')
 
-            step_X = empty((N, N))
-            step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
-
-            ax1[ii].axhline(0, color='black')
-            ax1[ii].plot(positions, roll(prob_ss_array[int(j*N/3), :]/prob_ss_array.sum(axis=0) -
-                                         step_X[int(j*N/3), :]/step_X.sum(axis=0), -int((j*N/3))))
-
-            # ax1[ii].plot(positions, step_X[j, :]/step_X.sum(axis=0), '--')
-
-            if ii == 0:
-                ax1[ii].set_title(r"$E_{\rm couple}$" + "={}".format(Ecouple))
-                ax1[ii].set_ylabel(r'$P(\theta_{\rm 1} | \theta_{\rm o} = %.1f)$' % (j * 2 * pi / 360))
-            else:
-                ax1[ii].set_title("{}".format(Ecouple))
-            ax1[ii].set_xlabel(r'$\theta_{\rm 1}$')
-            ax1[ii].spines['right'].set_visible(False)
-            ax1[ii].spines['top'].set_visible(False)
-            ax1[ii].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-            ax1[ii].set_ylim([-3e-6, 3e-6])
-            ax1[ii].set_xticks([0, pi/3, 2*pi/3, pi, 4*pi/3, 5*pi/3, 2*pi])
-            ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
-            # ax1[ii].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        if ii == 0:
+            ax1[ii].set_title(r"$E_{\rm couple}$" + "={}".format(Ecouple))
+            ax1[ii].set_ylabel(r'$P(\theta_{\rm o} | \theta_{\rm 1} = 0)$')
+        else:
+            ax1[ii].set_title("{}".format(Ecouple))
+        ax1[ii].set_xlabel(r'$\theta_{\rm 1}$')
+        ax1[ii].spines['right'].set_visible(False)
+        ax1[ii].spines['top'].set_visible(False)
+        ax1[ii].spines['bottom'].set_visible(False)
+        ax1[ii].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+        # ax1[ii].set_ylim([-3e-6, 3e-6])
+        ax1[ii].set_xticks([0, pi/3, 2*pi/3, pi, 4*pi/3, 5*pi/3, 2*pi])
+        ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        # ax1[ii].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
 
     f1.tight_layout()
-    f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, j))
+    f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
 
 
 def plot_derivative_flux():
@@ -1963,7 +1946,7 @@ def plot_1D_flux():
 def plot_2D_prob_ss_eq():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Cond_Pss_Peq_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Cond_xgy_Pss_Peq_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
@@ -1984,14 +1967,11 @@ def plot_2D_prob_ss_eq():
         print('Missing file')
         print(input_file_name.format(E0, 128.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-    prob_max = amax(prob_eq_array/prob_eq_array.sum(axis=0))
+    prob_max = amax(prob_eq_array.T/prob_eq_array.sum(axis=1))
     print(prob_max)
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
-        input_file_name = (
-                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n/" +
-                "reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
                 input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0),
@@ -1999,13 +1979,26 @@ def plot_2D_prob_ss_eq():
             N = int(sqrt(len(data_array[:, 0])))  # check grid size
             prob_ss_array = data_array[:, 0].reshape((N, N)).T
             prob_eq_array = data_array[:, 1].reshape((N, N)).T
-            print(num_minima1, num_minima2)
         except OSError:
             print('Missing file')
             print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
 
-        ax1[0, ii].contourf(prob_ss_array/prob_ss_array.sum(axis=0), vmin=0, vmax=prob_max)
-        ax1[1, ii].contourf(prob_eq_array/prob_eq_array.sum(axis=0), vmin=0, vmax=prob_max)
+        # test if eq prob was saved correctly
+        # Z = 0
+        # for i in range(N):
+        #     for j in range(N):
+        #         Z += exp(-0.5*(E0*cos(num_minima1*positions[i]) + Ecouple*cos(positions[i]-positions[j]) +
+        #                        E1*cos(num_minima2*positions[j])))
+        #
+        # for i in range(N):
+        #     for j in range(N):
+        #         prob_ss_array[i, j] = exp(-0.5*(E0*cos(num_minima1*positions[i]) +
+        #                                         Ecouple*cos(positions[i]-positions[j]) +
+        #                                         E1*cos(num_minima2*positions[j])))
+        # prob_ss_array = prob_ss_array/Z
+
+        ax1[0, ii].contourf((prob_ss_array.T/prob_ss_array.sum(axis=1)).T, vmin=0, vmax=prob_max)
+        ax1[1, ii].contourf((prob_eq_array.T/prob_eq_array.sum(axis=1)).T, vmin=0, vmax=prob_max)
 
         for jj in range(2):
             if ii == 0:

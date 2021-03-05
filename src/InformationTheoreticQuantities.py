@@ -24,7 +24,7 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
-Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_extra = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
 Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
@@ -1486,6 +1486,74 @@ def compare_info(target_dir):
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
 
 
+def plot_entropy_production_Ecouple(target_dir):
+    phase_shift = 0.0
+    psi1_array = array([2.0])
+    psi2_array = array([-1.6, -1.33, -1.78])
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+
+    output_file_name = (target_dir + "results/" +
+                        "Entropy_prod_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + ".pdf")
+
+    for psi_1 in psi1_array:
+        for psi_2 in psi2_array:
+            # calculate entropy production
+            integrate_entropy_X = empty(Ecouple_array_tot.size)
+            integrate_entropy_Y = empty(Ecouple_array_tot.size)
+            for ii, Ecouple in enumerate(Ecouple_array_tot):
+                if Ecouple in Ecouple_array_tot:
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200220_moregrid/" +
+                                       "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                       "_outfile.dat")
+                else:
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/raw_data/" +
+                                       "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                       "_outfile.dat")
+                try:
+                    data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1,
+                                                                num_minima2, phase_shift),
+                                         usecols=(0, 3, 4, 5, 6, 7, 8))
+                    N = int(sqrt(len(data_array)))
+                    dx = 2 * math.pi / N
+                    positions = linspace(0, 2 * math.pi - dx, N)
+                    # print('Grid size: ', N)
+
+                    prob_ss_array = data_array[:, 0].reshape((N, N))
+                    drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
+                    diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
+
+                    flux_array = zeros((2, N, N))
+                    calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+                    flux_array = asarray(flux_array)
+
+                    integrate_entropy_X[ii] = 10**3 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array, dx=dx), dx=dx) * timescale
+                    integrate_entropy_Y[ii] = 10**3 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array, dx=dx), dx=dx) * timescale
+                except OSError:
+                    print('Missing file')
+                    print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
+
+            # plot entropy production
+            plt.figure()
+            f, ax = plt.subplots(1, 1)
+            ax.plot(Ecouple_array_tot, integrate_entropy_X, '-o', label=r'$\dot{\Sigma}_{\rm o}$', color='tab:blue')
+            ax.plot(Ecouple_array_tot, integrate_entropy_Y, '-o', label=r'$\dot{\Sigma}_1$', color='tab:orange')
+            # ax.set_ylim((0, None))
+
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.set_xscale('log')
+            ax.set_yscale('log')
+            ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
+            ax.set_ylabel(r'$\dot{\Sigma} \, (s^{-1})$', fontsize=14)
+            # ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
+            ax.tick_params(axis='both', labelsize=14)
+            ax.yaxis.offsetText.set_fontsize(14)
+            ax.legend(fontsize=12, frameon=False, ncol=1)
+
+            f.tight_layout()
+            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
+
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # plot_ITQ_Ecouple(target_dir, 'learning_rate', 5e-2)  # options 'nostalgia', 'learning_rate', 'mutual_info',
@@ -1499,7 +1567,8 @@ if __name__ == "__main__":
     # plot_super_grid(target_dir, 5e-2)
     # plot_super_grid_peak(target_dir, 5e-2)
     # plot_super_grid_phi(target_dir, 5e-2)
-    plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
+    # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
     # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
     # compare_info(target_dir)
+    plot_entropy_production_Ecouple(target_dir)
