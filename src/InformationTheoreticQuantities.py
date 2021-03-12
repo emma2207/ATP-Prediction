@@ -14,10 +14,10 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 2.0  # barrier height Fo
-E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+E0 = 4.0  # barrier height Fo
+E1 = 4.0  # barrier height F1
+psi_1 = 2.0  # chemical driving force on Fo
+psi_2 = -0.25  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -1488,12 +1488,13 @@ def compare_info(target_dir):
 
 def plot_entropy_production_Ecouple(target_dir):
     phase_shift = 0.0
-    psi1_array = array([2.0])
-    psi2_array = array([-1.6, -1.33, -1.78])
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+    psi1_array = array([8.0])
+    psi2_array = array([-1.0])
+    # Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_extra)))
+    Ecouple_array_tot = array([16.0, 18.0, 20.0])
 
     output_file_name = (target_dir + "results/" +
-                        "Entropy_prod_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + ".pdf")
+                        "Entropy_prod_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + ".pdf")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1501,12 +1502,12 @@ def plot_entropy_production_Ecouple(target_dir):
             integrate_entropy_X = empty(Ecouple_array_tot.size)
             integrate_entropy_Y = empty(Ecouple_array_tot.size)
             for ii, Ecouple in enumerate(Ecouple_array_tot):
-                if Ecouple in Ecouple_array_tot:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200220_moregrid/" +
+                if Ecouple in Ecouple_extra:
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                 else:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/raw_data/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/spectral/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                 try:
@@ -1522,15 +1523,22 @@ def plot_entropy_production_Ecouple(target_dir):
                     drift_at_pos = data_array[:, 1:3].T.reshape((2, N, N))
                     diffusion_at_pos = data_array[:, 3:].T.reshape((4, N, N))
 
+                    for i in range(N):
+                        for j in range(N):
+                            if prob_ss_array[i, j] == 0:
+                                prob_ss_array[i, j] = 10e-18
+
                     flux_array = zeros((2, N, N))
                     calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
                     flux_array = asarray(flux_array)
 
-                    integrate_entropy_X[ii] = 10**3 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array, dx=dx), dx=dx) * timescale
-                    integrate_entropy_Y[ii] = 10**3 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array, dx=dx), dx=dx) * timescale
+                    integrate_entropy_X[ii] = 10**3 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
+                    integrate_entropy_Y[ii] = 10**3 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
                 except OSError:
                     print('Missing file')
                     print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
+
+            print(integrate_entropy_X, integrate_entropy_Y)
 
             # plot entropy production
             plt.figure()
@@ -1551,7 +1559,7 @@ def plot_entropy_production_Ecouple(target_dir):
             ax.legend(fontsize=12, frameon=False, ncol=1)
 
             f.tight_layout()
-            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
+            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
 
 
 if __name__ == "__main__":

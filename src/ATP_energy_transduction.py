@@ -25,7 +25,7 @@ min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barrie
 
 Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
 
 Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
@@ -288,8 +288,8 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 def heat_work_info(target_dir):
     Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    psi1_array = array([8.0])
-    psi2_array = array([-4.0])
+    psi1_array = array([2.0])
+    psi2_array = array([-1.0, -0.25, -0.5])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -303,7 +303,7 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/spectral/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                     output_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
@@ -1511,16 +1511,16 @@ def plot_2D_prob():
 def plot_2D_LR_energy():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "LR_integrand_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "LR_integrand_scaled_2_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    Ecouple_array_tot = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
+    Ecouple_array_tot = array([4.0, 5.66, 8.0, 11.31, 16.0, 22.63])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array_tot.size, figsize=(3.5*Ecouple_array_tot.size, 3))
 
     # Find max prob. to set plot range
     input_file_name = (
-            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n" +
             "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
     try:
         data_array = loadtxt(
@@ -1559,9 +1559,9 @@ def plot_2D_LR_energy():
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array_tot):
-        if Ecouple in Ecouple_array_peak:
+        if Ecouple in Ecouple_array_tot:
             input_file_name = (
-                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
+                    "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210214_varying_n" +
                     "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         else:
             input_file_name = (
@@ -1596,17 +1596,18 @@ def plot_2D_LR_energy():
 
         learning_rate = -dflux_array[1, ...] * log(prob_ss_array)
 
-        cs = ax1[ii].contourf(learning_rate.T, linspace(-prob_max, prob_max, 200), cmap=plt.cm.coolwarm,
+        cs = ax1[ii].contourf(learning_rate[::2, ::2].T, linspace(-prob_max, prob_max, 200), cmap=plt.cm.coolwarm,
                               norm=mc.Normalize(vmin=-prob_max, vmax=prob_max))
+        N = N/2
 
-        ax1[ii].plot(30, 14, 'w*')
-        ax1[ii].plot(148, 133, 'w*')
-        ax1[ii].plot(267, 251, 'w*')
+        # ax1[ii].plot(30, 14, 'w*')
+        # ax1[ii].plot(148, 133, 'w*')
+        # ax1[ii].plot(267, 251, 'w*')
 
         if ii == 0:
             ax1[ii].set_title(r"$E_{\rm couple}$" + "={}".format(Ecouple))
             ax1[ii].set_ylabel(r'$\theta_{\rm 1}$')
-            ax1[ii].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+            ax1[ii].set_yticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
         else:
             ax1[ii].set_title("{}".format(Ecouple))
             ax1[ii].set_yticklabels(['', '', '', '', '', '', ''])
@@ -1617,11 +1618,11 @@ def plot_2D_LR_energy():
         # ax1[ii].set_yticks([0, 60, 120, 180, 240, 300, 360])
         ax1[ii].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
         ax1[ii].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
-        ax1[ii].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        ax1[ii].set_xticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
 
     cax = f1.add_axes([0.92, 0.1, 0.01, 0.85])
     cbar = f1.colorbar(
-        cs, cax=cax, orientation='vertical', ax=ax1, ticks=[-1.5e-2, -1e-2, -0.5e-2, 0, 0.5e-2, 1e-2, 1.5e-2]
+        cs, cax=cax, orientation='vertical', ax=ax1, ticks=[-2e-2, -1e-2, 0, 1e-2, 2e-2]
     )
     cbar.set_label(r'$\log \left( P^{\rm ss} \right) \partial_{\theta_1} J_1$', fontsize=16)
     # cbar.set_label(r'$P^{\rm ss}$', fontsize=16)
@@ -2038,8 +2039,8 @@ if __name__ == "__main__":
     # plot_energy_flow(target_dir)
     # plot_2D_prob()
     # plot_2D_prob_flux()
-    # plot_2D_LR_energy()
+    plot_2D_LR_energy()
     # plot_marginal_prob()
     # plot_derivative_flux()
     # plot_1D_flux()
-    plot_2D_prob_ss_eq()
+    # plot_2D_prob_ss_eq()
