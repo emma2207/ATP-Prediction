@@ -14,11 +14,11 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 2.0  # barrier height Fo
-E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
-num_minima1 = 2.0  # number of barriers in Fo's landscape
+E0 = 0.0  # barrier height Fo
+E1 = 0.0  # barrier height F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
+num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
@@ -2039,7 +2039,7 @@ if __name__ == "__main__":
     # plot_energy_flow(target_dir)
     # plot_2D_prob()
     # plot_2D_prob_flux()
-    plot_2D_LR_energy()
+    # plot_2D_LR_energy()
     # plot_marginal_prob()
     # plot_derivative_flux()
     # plot_1D_flux()
