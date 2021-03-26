@@ -14,8 +14,8 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 0.0  # barrier height Fo
-E1 = 0.0  # barrier height F1
+E0 = 2.0  # barrier height Fo
+E1 = 2.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
@@ -1428,10 +1428,10 @@ def plot_energy_flow(target_dir):
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_xgy_2D_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pss_cm_diff_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
-    # Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
-    Ecouple_array = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
+    Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
+    # Ecouple_array = array([2.0, 16.0, 128.0])
 
     plt.figure()
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(2.5 * Ecouple_array.size, 3))
@@ -1454,7 +1454,7 @@ def plot_2D_prob():
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
         input_file_name = (
-                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
+                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip" +
                 "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
@@ -1486,16 +1486,26 @@ def plot_2D_prob():
         # step_X = zeros((N, N))
         # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
 
-        ax1[ii].contourf((prob_ss_array/prob_ss_array.sum(axis=0)).T, vmin=0, vmax=0.03)
+        prob_new = zeros((N, N))
+        for i in range(N):
+            for j in range(N):
+                prob_new[i, j] = prob_ss_array[(i + j) % N, (i - j) % N]
+
+                # prob_ss_new[i, (j + 180) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
+
+        ax1[ii].contourf(prob_new, vmin=0, vmax=0.0004)
 
         if ii == 0:
             ax1[ii].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouple))
-            ax1[ii].set_ylabel(r'$\theta_1$ (rev)')
-            ax1[ii].set_yticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
+            # ax1[ii].set_ylabel(r'$\theta_1$ (rev)')
+            ax1[ii].set_ylabel(r'$\theta_{\rm diff}$ (rev)')
+            # ax1[ii].set_yticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
+            ax1[ii].set_yticklabels(['$-1/2$', '', '', '0', '', '', '$1/2$'])
         else:
             ax1[ii].set_title("{}".format(Ecouple))
             ax1[ii].set_yticklabels(['', '', '', '', '', '', ''])
-        ax1[ii].set_xlabel(r'$\theta_{\rm o}$ (rev)')
+        # ax1[ii].set_xlabel(r'$\theta_{\rm o}$ (rev)')
+        ax1[ii].set_xlabel(r'$\theta_{\rm cm}$ (rev)')
         ax1[ii].spines['right'].set_visible(False)
         ax1[ii].spines['top'].set_visible(False)
         # ax1[ii].set_xticks([0, 60, 120, 180, 240, 300, 360])
@@ -1503,6 +1513,7 @@ def plot_2D_prob():
         ax1[ii].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
         ax1[ii].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
         ax1[ii].set_xticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
+        # ax1[ii].set_xticklabels(['$-1/2$', '', '', '0', '', '', '$1/2$'])
 
     f1.tight_layout()
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -2037,7 +2048,7 @@ if __name__ == "__main__":
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
     # plot_energy_flow(target_dir)
-    # plot_2D_prob()
+    plot_2D_prob()
     # plot_2D_prob_flux()
     # plot_2D_LR_energy()
     # plot_marginal_prob()
