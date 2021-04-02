@@ -1491,10 +1491,13 @@ def plot_entropy_production_Ecouple(target_dir):
     phase_shift = 0.0
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+    gamma1 = 1000.0
+    gamma2 = 500.0
+    av_gamma = 0.5 * (gamma2 + gamma1)
 
     output_file_name = (target_dir + "results/" +
-                        "Entropy_prod_comp_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + ".pdf")
+                        "Entropy_prod_2_friction_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1503,19 +1506,19 @@ def plot_entropy_production_Ecouple(target_dir):
             integrate_entropy_Y = empty(Ecouple_array_tot.size)
             integrate_entropy_sum = empty(Ecouple_array_tot.size)
             integrate_entropy_diff = empty(Ecouple_array_tot.size)
-            integrate_heat_X = empty(Ecouple_array_tot.size)
-            integrate_heat_Y = empty(Ecouple_array_tot.size)
-            integrate_LR = empty(Ecouple_array_tot.size)
-            integrate_entropy2_X = empty(Ecouple_array_tot.size)
-            integrate_entropy2_Y = empty(Ecouple_array_tot.size)
+            # integrate_heat_X = empty(Ecouple_array_tot.size)
+            # integrate_heat_Y = empty(Ecouple_array_tot.size)
+            # integrate_LR = empty(Ecouple_array_tot.size)
+            # integrate_entropy2_X = empty(Ecouple_array_tot.size)
+            # integrate_entropy2_Y = empty(Ecouple_array_tot.size)
 
             for ii, Ecouple in enumerate(Ecouple_array_tot):
-                if Ecouple in Ecouple_array_tot:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip/" +
+                if Ecouple in Ecouple_extra:
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210329_friction/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                 else:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/spectral/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                 try:
@@ -1541,56 +1544,57 @@ def plot_entropy_production_Ecouple(target_dir):
                     calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
                     flux_array = asarray(flux_array)
 
-                    integrate_entropy_X[ii] = 10**3 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
-                    integrate_entropy_Y[ii] = 10**3 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
-                    integrate_entropy_sum[ii] = 10**3 * trapz(trapz(
-                        (flux_array[0, ...] + flux_array[1, ...]) ** 2 / prob_ss_array)
-                    ) * timescale
-                    integrate_entropy_diff[ii] = 10**3 * trapz(trapz(
-                        (flux_array[0, ...] - flux_array[1, ...]) ** 2 / prob_ss_array)
-                    ) * timescale
+                    integrate_entropy_X[ii] = gamma1 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
+                    integrate_entropy_Y[ii] = gamma2 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
+                    # integrate_entropy_sum[ii] = trapz(trapz(
+                    #     (av_gamma * flux_array[0, ...] + av_gamma * flux_array[1, ...]) ** 2 / prob_ss_array)
+                    # ) * timescale
+                    # integrate_entropy_diff[ii] = trapz(trapz(
+                    #     (av_gamma * flux_array[0, ...] - av_gamma * flux_array[1, ...]) ** 2 / prob_ss_array)
+                    # ) * timescale
 
                     # calculate heat flow
-                    dpotential_x = zeros((N, N))
-                    dpotential_y = zeros((N, N))
-                    calc_derivative(potential_at_pos, dpotential_x, N, dx, 0)
-                    calc_derivative(potential_at_pos, dpotential_y, N, dx, 1)
-
-                    integrate_heat_X[ii] = trapz(trapz(flux_array[0, ...] * (dpotential_x - psi_1))) * timescale
-                    integrate_heat_Y[ii] = trapz(trapz(flux_array[1, ...] * (dpotential_y - psi_2))) * timescale
-
-                    # calculate learning rate
-                    dflux_array = empty((2, N, N))
-                    derivative_flux(flux_array, dflux_array, N, dx)
-
-                    for i in range(N):
-                        for j in range(N):
-                            if prob_ss_array[i, j] == 0:
-                                prob_ss_array[i, j] = 10e-18
-
-                    integrate_LR[ii] = -trapz(trapz(dflux_array[1, ...] * log(prob_ss_array))) * timescale
+                    # dpotential_x = zeros((N, N))
+                    # dpotential_y = zeros((N, N))
+                    # calc_derivative(potential_at_pos, dpotential_x, N, dx, 0)
+                    # calc_derivative(potential_at_pos, dpotential_y, N, dx, 1)
+                    #
+                    # integrate_heat_X[ii] = trapz(trapz(flux_array[0, ...] * (dpotential_x - psi_1))) * timescale
+                    # integrate_heat_Y[ii] = trapz(trapz(flux_array[1, ...] * (dpotential_y - psi_2))) * timescale
+                    #
+                    # # calculate learning rate
+                    # dflux_array = empty((2, N, N))
+                    # derivative_flux(flux_array, dflux_array, N, dx)
+                    #
+                    # for i in range(N):
+                    #     for j in range(N):
+                    #         if prob_ss_array[i, j] == 0:
+                    #             prob_ss_array[i, j] = 10e-18
+                    #
+                    # integrate_LR[ii] = -trapz(trapz(dflux_array[1, ...] * log(prob_ss_array))) * timescale
 
                 except OSError:
                     print('Missing file')
                     print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
 
-            integrate_entropy2_X = -integrate_heat_X + integrate_LR
-            integrate_entropy2_Y = -integrate_heat_Y - integrate_LR
+            # integrate_entropy2_X = -integrate_heat_X + integrate_LR
+            # integrate_entropy2_Y = -integrate_heat_Y - integrate_LR
 
             # plot entropy production
             plt.figure()
             f, ax = plt.subplots(1, 1)
             ax.plot(Ecouple_array_tot, integrate_entropy_X, '-o', label=r'$\dot{\Sigma}_{\rm o}$', color='tab:blue')
             ax.plot(Ecouple_array_tot, integrate_entropy_Y, '-v', label=r'$\dot{\Sigma}_1$', color='tab:blue')
-            # ax.plot(Ecouple_array_tot, integrate_entropy_Y + integrate_entropy_X, '-o', label=r'$\dot{\Sigma}$',
-            #         color='tab:orange')
+            ax.plot(Ecouple_array_tot, integrate_entropy_Y + integrate_entropy_X, '-o', label=r'$\dot{\Sigma}$',
+                    color='tab:orange')
             # ax.plot(Ecouple_array_tot, 0.5*integrate_entropy_sum, '-o', label=r'$\dot{\Sigma}_{\bar{\theta}}$',
             #         color='tab:green')
             # ax.plot(Ecouple_array_tot, 0.5*integrate_entropy_diff, '-v', label=r'$\dot{\Sigma}_{\Delta \theta}$',
             #         color='tab:green')
-            ax.plot(Ecouple_array_tot, integrate_entropy2_X, '--o', label=r'$\dot{\Sigma}_{\rm o}$', color='tab:orange')
-            ax.plot(Ecouple_array_tot, integrate_entropy2_Y, '--v', label=r'$\dot{\Sigma}_1$', color='tab:orange')
-            ax.set_ylim((1, None))
+            # ax.plot(Ecouple_array_tot, integrate_entropy2_X, '--o', label=r'$\dot{\Sigma}_{\rm o}$', color='tab:orange')
+            # ax.plot(Ecouple_array_tot, integrate_entropy2_Y, '--v', label=r'$\dot{\Sigma}_1$', color='tab:orange')
+            # ax.set_ylim((3, 300))
+            ax.set_xlim((2, None))
 
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
@@ -1604,7 +1608,7 @@ def plot_entropy_production_Ecouple(target_dir):
             ax.legend(fontsize=12, frameon=False, ncol=1)
 
             f.tight_layout()
-            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
+            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
 
 
 if __name__ == "__main__":

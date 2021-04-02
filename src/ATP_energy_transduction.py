@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
 import matplotlib.colors as mc
-from utilities import step_probability_X, calc_flux_2, calc_derivative_pxgy, step_probability_Y
+from utilities import step_probability_X, calc_derivative_pxgy, step_probability_Y
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 
@@ -23,9 +23,9 @@ num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
-Ecouple_array = array([2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
+Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])  # coupling strengths
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
-Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
+Ecouple_array_double = array([1.41, 2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
 
 Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
@@ -287,9 +287,9 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 
 def heat_work_info(target_dir):
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    psi1_array = array([2.0])
-    psi2_array = array([-1.0, -0.25, -0.5])
+    Ecouple_array_tot = Ecouple_array_double
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
     phase_array = array([0.0])
 
     for psi_1 in psi1_array:
@@ -303,7 +303,7 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/spectral/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                     output_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
@@ -1351,10 +1351,10 @@ def calc_heat_flow():
 
 def plot_energy_flow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([8.0])
-    psi2_array = array([-4.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
     barrier_height = array([2.0])
-    input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
+    input_file_name = (target_dir + "data/200915_energyflows/Friction/" +
                        "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
     output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
@@ -1368,7 +1368,7 @@ def plot_energy_flow(target_dir):
                 for j, E0 in enumerate(barrier_height):
                     E1 = E0
                     if E0 == 0.0:
-                        Ecouple_array_total = Ecouple_array
+                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
                     else:
                         Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
 
@@ -1405,7 +1405,8 @@ def plot_energy_flow(target_dir):
                     #         label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
                     # ax.plot(Ecouple_array_total, learning_rate, '-o', color='tab:orange')
 
-                # ax.set_ylim((0, None))
+                ax.set_ylim((-250, 250))
+                ax.set_xlim((2, None))
 
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
@@ -1428,7 +1429,7 @@ def plot_energy_flow(target_dir):
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_cm_diff_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pss_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([2.0, 16.0, 128.0])
@@ -1486,26 +1487,27 @@ def plot_2D_prob():
         # step_X = zeros((N, N))
         # step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, 5e-2)
 
-        prob_new = zeros((N, N))
-        for i in range(N):
-            for j in range(N):
-                prob_new[i, j] = prob_ss_array[(i + j) % N, (i - j) % N]
+        # prob_new = zeros((N, N))
+        # for i in range(N):
+        #     for j in range(N):
+        #         if (j < i and j + i < N) or (j > i and N < (j + i)):
+        #             prob_new[i, (j + int(N/2)) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
 
                 # prob_ss_new[i, (j + 180) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
 
-        ax1[ii].contourf(prob_new, vmin=0, vmax=0.0004)
+        ax1[ii].contourf(prob_ss_array.T, vmin=0, vmax=0.0004)
 
         if ii == 0:
             ax1[ii].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouple))
-            # ax1[ii].set_ylabel(r'$\theta_1$ (rev)')
-            ax1[ii].set_ylabel(r'$\theta_{\rm diff}$ (rev)')
-            # ax1[ii].set_yticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
-            ax1[ii].set_yticklabels(['$-1/2$', '', '', '0', '', '', '$1/2$'])
+            ax1[ii].set_ylabel(r'$\theta_1$ (rev)')
+            # ax1[ii].set_ylabel(r'$\theta_{\rm diff}$ (rev)')
+            ax1[ii].set_yticklabels(['$0$', '', '$1/3$', '', '$2/3$', '', '$1$'])
+            # ax1[ii].set_yticklabels(['$-1/2$', '', '', '0', '', '', '$1/2$'])
         else:
             ax1[ii].set_title("{}".format(Ecouple))
             ax1[ii].set_yticklabels(['', '', '', '', '', '', ''])
-        # ax1[ii].set_xlabel(r'$\theta_{\rm o}$ (rev)')
-        ax1[ii].set_xlabel(r'$\theta_{\rm cm}$ (rev)')
+        ax1[ii].set_xlabel(r'$\theta_{\rm o}$ (rev)')
+        # ax1[ii].set_xlabel(r'$\theta_{\rm cm}$ (rev)')
         ax1[ii].spines['right'].set_visible(False)
         ax1[ii].spines['top'].set_visible(False)
         # ax1[ii].set_xticks([0, 60, 120, 180, 240, 300, 360])
