@@ -1492,12 +1492,11 @@ def plot_entropy_production_Ecouple(target_dir):
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
     Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    gamma1 = 1000.0
-    gamma2 = 500.0
-    av_gamma = 0.5 * (gamma2 + gamma1)
+    gamma0 = 1000.0
+    gamma1 = 100.0
 
     output_file_name = (target_dir + "results/" +
-                        "Entropy_prod_2_friction_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
+                        "Entropy_prod_gamma1_100_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -1513,8 +1512,8 @@ def plot_entropy_production_Ecouple(target_dir):
             # integrate_entropy2_Y = empty(Ecouple_array_tot.size)
 
             for ii, Ecouple in enumerate(Ecouple_array_tot):
-                if Ecouple in Ecouple_extra:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210329_friction/" +
+                if Ecouple in Ecouple_array_tot:
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210329_friction/gamma1_100/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                 else:
@@ -1544,8 +1543,8 @@ def plot_entropy_production_Ecouple(target_dir):
                     calc_flux_2(positions, prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
                     flux_array = asarray(flux_array)
 
-                    integrate_entropy_X[ii] = gamma1 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
-                    integrate_entropy_Y[ii] = gamma2 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
+                    integrate_entropy_X[ii] = gamma0 * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
+                    integrate_entropy_Y[ii] = gamma1 * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
                     # integrate_entropy_sum[ii] = trapz(trapz(
                     #     (av_gamma * flux_array[0, ...] + av_gamma * flux_array[1, ...]) ** 2 / prob_ss_array)
                     # ) * timescale

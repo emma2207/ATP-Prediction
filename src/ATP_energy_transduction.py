@@ -287,7 +287,7 @@ def flux_power_efficiency(target_dir):  # processing of raw data
 
 
 def heat_work_info(target_dir):
-    Ecouple_array_tot = Ecouple_array_double
+    Ecouple_array_tot = sort((concatenate((Ecouple_array, Ecouple_array_double))))
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
     phase_array = array([0.0])
@@ -303,10 +303,10 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210329_friction/gamma1_100/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
-                    output_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
+                    output_file_name = (target_dir + "data/210329_friction/gamma1_100/" +
                                         "power_heat_info_" +
                                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
@@ -1354,10 +1354,9 @@ def plot_energy_flow(target_dir):
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
     barrier_height = array([2.0])
-    input_file_name = (target_dir + "data/200915_energyflows/Friction/" +
-                       "power_heat_info_" +
+    input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
+    output_file_name = (target_dir + "results/" + "Energy_flow_seq1_Ecouple_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phi_{6}" + "_.pdf")
 
     for psi_1 in psi1_array:
@@ -1370,7 +1369,7 @@ def plot_energy_flow(target_dir):
                     if E0 == 0.0:
                         Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
                     else:
-                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad, Ecouple_array_peak)))
 
                     power_x = empty(Ecouple_array_total.size)
                     power_y = empty(Ecouple_array_total.size)
@@ -1392,20 +1391,20 @@ def plot_energy_flow(target_dir):
                             print('Missing file')
                             print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
-
                     ax.axhline(0, color='black')
                     # ax.axhline(1, color='grey')
 
                     ax.plot(Ecouple_array_total, power_x, '-o', label=r'$P_{\rm H^+}$', color='tab:blue')
-                    ax.plot(Ecouple_array_total, power_y, '-o', label=r'$P_{\rm ATP}$', color='tab:orange')
-                    ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
-                    ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
-                    ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$P_{\rm o \to 1}$', color='tab:purple')
+                    # ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
+                    # ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$P_{\rm o \to 1}$', color='tab:purple')
+                    # ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
+                    # ax.plot(Ecouple_array_total, power_y, '-o', label=r'$P_{\rm ATP}$', color='tab:orange')
+
                     # ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
                     #         label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
                     # ax.plot(Ecouple_array_total, learning_rate, '-o', color='tab:orange')
 
-                ax.set_ylim((-250, 250))
+                ax.set_ylim((-200, 200))
                 ax.set_xlim((2, None))
 
                 ax.spines['right'].set_visible(False)
@@ -1413,14 +1412,14 @@ def plot_energy_flow(target_dir):
                 ax.spines['bottom'].set_visible(False)
                 ax.set_xscale('log')
                 # ax.set_yscale('log')
-                ax.set_xlabel(r'$E_{\rm couple}$', fontsize=14)
-                # ax.set_ylabel(r'$\ell_1$', fontsize=14)
+                ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
+                ax.set_ylabel(r'$\textrm{Energy flow} \ (\textrm{k}_{\rm B}T / s)$', fontsize=14)
                 # ax.set_ylabel(r'$\dot{Q}_1 / \dot{E}_{\rm o \to 1}$', fontsize=14)
                 # ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
                 ax.tick_params(axis='both', labelsize=14)
                 ax.yaxis.offsetText.set_fontsize(14)
                 # ax.legend(fontsize=12, frameon=False, ncol=1, title=r'$E_{\rm o} = E_1$')
-                ax.legend(fontsize=12, frameon=False, ncol=3)
+                ax.legend(fontsize=14, frameon=False, ncol=2)
 
                 f.tight_layout()
                 f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
@@ -2049,8 +2048,8 @@ if __name__ == "__main__":
     # plot_nn_power_efficiency_phi(target_dir)
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
-    # plot_energy_flow(target_dir)
-    plot_2D_prob()
+    plot_energy_flow(target_dir)
+    # plot_2D_prob()
     # plot_2D_prob_flux()
     # plot_2D_LR_energy()
     # plot_marginal_prob()
