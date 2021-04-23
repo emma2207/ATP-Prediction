@@ -2040,13 +2040,13 @@ def plot_2D_prob_ss_eq():
 def plot_pareto(target_dir):
     phase_array = array([0.0])
     psi1_array = array([4.0])
-    psi2_array = array([-0.5, -1.0, -2.0])
-    barrier_height = array([2.0])
-    # labels = ["$0.0$", "$2.0$", "$4.0$"]
-    labels = ['$-0.5$', '$-1.0$', '$-2.0$', '$-2.67$']
+    psi2_array = array([-2.0])
+    barrier_height = array([0.0, 2.0, 4.0])
+    labels = ["$0.0$", "$2.0$", "$4.0$"]
+    # labels = ['$-0.5$', '$-1.0$', '$-2.0$', '$-2.67$']
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = (target_dir + "results/" + "Pareto_clip_forces_" +
+    output_file_name = (target_dir + "results/" + "Pareto_clip_barriers_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phi_{6}" + "_.pdf")
 
     plt.figure()
@@ -2054,7 +2054,9 @@ def plot_pareto(target_dir):
 
     ax.axhline(0, color='black')
     ax.axvline(0, color='black')
-    ax.axhline(1, color='grey', linestyle='--')
+    ax.axvline(1, color='grey', linestyle='--')
+
+    ax.plot([1], [30], marker='*', color='C8', markersize=20)
 
     for psi_1 in psi1_array:
         for ii, psi_2 in enumerate(psi2_array):
@@ -2095,7 +2097,7 @@ def plot_pareto(target_dir):
                             print('Missing file')
                             print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
-            ax.plot(-power_y, power_y * psi_1 / (power_x * psi_2), '-o', label=labels[ii])
+                    ax.plot(power_y * psi_1 / (power_x * psi_2), -power_y, '-o', label=labels[j])
             # ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
             # ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$P_{\rm o \to 1}$', color='tab:purple')
             # ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
@@ -2105,8 +2107,8 @@ def plot_pareto(target_dir):
             #         label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
             # ax.plot(Ecouple_array_total, learning_rate, '-o', color='tab:orange')
 
-        ax.set_ylim((0, 1.05))
-        ax.set_xlim((0, 17))
+        ax.set_xlim((0, 1.05))
+        ax.set_ylim((0, 32))
 
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
@@ -2114,13 +2116,14 @@ def plot_pareto(target_dir):
         ax.spines['left'].set_visible(False)
         # ax.set_xscale('log')
         # ax.set_yscale('log')
-        ax.set_xlabel(r'$\beta P_{\rm ATP} \, (\textrm{k}_{\rm B}T / s)$', fontsize=14)
-        ax.set_ylabel(r'$\eta / \eta^{\rm max}$', fontsize=14)
+        ax.set_ylabel(r'$-\beta P_{\rm ATP} \, (\textrm{k}_{\rm B}T / \rm s)$', fontsize=14)
+        ax.set_xlabel(r'$\eta / \eta^{\rm max}$', fontsize=14)
         # ax.set_ylabel(r'$\dot{Q}_1 / \dot{E}_{\rm o \to 1}$', fontsize=14)
         # ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
         ax.tick_params(axis='both', labelsize=14)
         ax.yaxis.offsetText.set_fontsize(14)
-        leg = ax.legend(fontsize=14, frameon=False, ncol=1, title=r'$\mu_{\rm ATP}$', loc='best')
+        leg = ax.legend(fontsize=14, frameon=False, ncol=1, title=r'$\beta E_{\rm o} = \beta E_1$', loc='best')
+        # leg = ax.legend(fontsize=14, frameon=False, ncol=1, title=r'$\mu_{\rm ATP}$', loc='best')
         leg.get_title().set_fontsize('14')
         # ax.legend(fontsize=14, frameon=False, ncol=2)
 
