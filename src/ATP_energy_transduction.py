@@ -1,5 +1,5 @@
 from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, amax, \
-    concatenate, sort, roll, amin, cos, exp
+    concatenate, sort, roll, amin, cos, exp, finfo
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -1430,7 +1430,7 @@ def plot_energy_flow(target_dir):
 def plot_2D_prob():
     output_file_name1 = (
             "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+            "Pot_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
 
     Ecouple_array = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0])
     # Ecouple_array = array([2.0, 16.0, 128.0])
@@ -1439,24 +1439,24 @@ def plot_2D_prob():
     f1, ax1 = plt.subplots(1, Ecouple_array.size, figsize=(2.5 * Ecouple_array.size, 3))
 
     # Find max prob. to set plot range
-    # input_file_name = (
-    #         "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200506_4kTbarrier/6kT" +
-    #         "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
-    # try:
-    #     data_array = loadtxt(
-    #         input_file_name.format(E0, 24.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=0)
-    #     N = int(sqrt(len(data_array)))
-    #     prob_ss_array = data_array.reshape((N, N))
-    # except OSError:
-    #     print('Missing file')
-    #     print(input_file_name.format(E0, 24.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
-    #
-    # prob_max = amax(prob_ss_array)
+    input_file_name = (
+            "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
+            "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
+    try:
+        data_array = loadtxt(
+            input_file_name.format(E0, amax(Ecouple_array), E1, psi_1, psi_2, num_minima1, num_minima2, 0.0), usecols=2)
+        N = int(sqrt(len(data_array)))
+        prob_ss_array = data_array.reshape((N, N))
+    except OSError:
+        print('Missing file')
+        print(input_file_name.format(E0, 24.0, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0))
+
+    prob_max = amax(prob_ss_array)
 
     # plots
     for ii, Ecouple in enumerate(Ecouple_array):
         input_file_name = (
-                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip" +
+                "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set" +
                 "/reference_" + "E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" + "_outfile.dat")
         try:
             data_array = loadtxt(
@@ -1496,7 +1496,7 @@ def plot_2D_prob():
 
                 # prob_ss_new[i, (j + 180) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
 
-        ax1[ii].contourf(prob_ss_array.T, vmin=0, vmax=0.0004)
+        ax1[ii].contourf(potential_at_pos.T, vmin=0, vmax=prob_max)
 
         if ii == 0:
             ax1[ii].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouple))
@@ -2145,11 +2145,11 @@ if __name__ == "__main__":
     # plot_n0_power_efficiency_Ecouple(target_dir)
     # calc_heat_flow()
     # plot_energy_flow(target_dir)
-    # plot_2D_prob()
+    plot_2D_prob()
     # plot_2D_prob_flux()
     # plot_2D_LR_energy()
     # plot_marginal_prob()
     # plot_derivative_flux()
     # plot_1D_flux()
     # plot_2D_prob_ss_eq()
-    plot_pareto(target_dir)
+    # plot_pareto(target_dir)
