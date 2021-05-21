@@ -1,5 +1,5 @@
 from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, argmax, sin, amax, \
-    concatenate, sort, roll, amin, cos, exp, finfo, logspace
+    concatenate, sort, roll, amin, cos, exp, finfo, logspace, setdiff1d
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
@@ -14,8 +14,8 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 2.0  # barrier height Fo
-E1 = 2.0  # barrier height F1
+E0 = 0.0  # barrier height Fo
+E1 = 0.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
@@ -484,11 +484,12 @@ def plot_power_Ecouple(target_dir):  # plot power and efficiency vs coupling str
 
 
 def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs coupling strength
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_peak, Ecouple_array_double)))
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+    Ecouple_array_tot = setdiff1d(Ecouple_array_tot, array([64.0]))
 
-    barrier_heights = array([2.0, 4.0])
-    barrier_label = ['$2$', '$4$']
-    colorlst = ['C1', 'C9']
+    barrier_heights = array([0.0])
+    barrier_label = ['$0$', '$2$', '$4$']
+    colorlst = ['C0', 'C1', 'C9']
     offset = [0, 1]
 
     output_file_name = (
@@ -498,14 +499,14 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
 
     # power plot
     axarr[0].axhline(0, color='black', linewidth=1)  # x-axis
-    maxpower = 2 * pi * 0.000085247 * timescale
-    axarr[0].axhline(maxpower, color='C1', linestyle=':', linewidth=2)  # line at infinite power coupling
-    axarr[0].fill_between([1, 250], 0, 31, facecolor='grey', alpha=0.2)  # shading power output
+    # maxpower = 2 * pi * 0.000085247 * timescale
+    # axarr[0].axhline(maxpower, color='C1', linestyle=':', linewidth=2)  # line at infinite power coupling
+    # axarr[0].fill_between([1, 250], 0, 31, facecolor='grey', alpha=0.2)  # shading power output
 
     # efficiency plot
     axarr[1].axhline(0, color='black', linewidth=1)  # x axis
-    axarr[1].axhline(1, color='C1', linestyle=':', linewidth=2)  # max efficiency
-    axarr[1].fill_between([1, 250], 0, 1, facecolor='grey', alpha=0.2)  # shading power output
+    # axarr[1].axhline(1, color='C1', linestyle=':', linewidth=2)  # max efficiency
+    # axarr[1].fill_between([1, 250], 0, 1, facecolor='grey', alpha=0.2)  # shading power output
 
     # zero-barrier results
     input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/" +
@@ -519,10 +520,9 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
     axarr[1].plot(Ecouple_array2, flux_y_array / flux_x_array, '-', color='C0', linewidth=2)
 
     # peak position estimate output power from theory
-    Ecouple_est = 3.31 + 4 * pi * (psi_1 - psi_2) / 9
-
-    # Fokker-Planck results
-    i = 0  # only use phase=0 data
+    # Ecouple_est = 3.31 + 4 * pi * (psi_1 - psi_2) / 9
+    #
+    # # Fokker-Planck results
     for j, E0 in enumerate(barrier_heights):
         E1 = E0
         power_x_array = []
@@ -544,43 +544,43 @@ def plot_power_efficiency_Ecouple(target_dir):  # plot power and efficiency vs c
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
         # calculate line position and width to include 'error'
-        idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y_array.argmin()])).argmin()
-        midpoint = (Ecouple_array_tot[idx - 1] + Ecouple_array_tot[idx + 1]) / 2
-        width = Ecouple_array_tot[idx + 1] - Ecouple_array_tot[idx - 1]
+        # idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y_array.argmin()])).argmin()
+        # midpoint = (Ecouple_array_tot[idx - 1] + Ecouple_array_tot[idx + 1]) / 2
+        # width = Ecouple_array_tot[idx + 1] - Ecouple_array_tot[idx - 1]
 
-        axarr[0].axvline(midpoint, linestyle=(offset[j], (1, 1)), color=colorlst[j], linewidth=6 * width, alpha=0.4)
-        axarr[1].axvline(midpoint, linestyle=(offset[j], (1, 1)), color=colorlst[j], linewidth=6 * width, alpha=0.4)
+        # axarr[0].axvline(midpoint, linestyle=(offset[j], (1, 1)), color=colorlst[j], linewidth=6 * width, alpha=0.4)
+        # axarr[1].axvline(midpoint, linestyle=(offset[j], (1, 1)), color=colorlst[j], linewidth=6 * width, alpha=0.4)
 
         axarr[0].plot(Ecouple_array_tot, -power_y_array, 'o', color=colorlst[j], label=barrier_label[j],
                       markersize=8)
         axarr[1].plot(Ecouple_array_tot, eff_array / (psi_2 / psi_1), 'o', color=colorlst[j], markersize=8)
 
     # rate calculations theory line efficiency
-    pos = linspace(1, 128, 200)
-    theory = 1 - 3 * exp((pi / 3) * (psi_1 - psi_2) - 0.75 * pos)
-    axarr[1].plot(pos, theory, '--', color='black', linewidth=2)
-    axarr[0].axvline(Ecouple_est, color='black', linestyle='--', linewidth=2)
+    # pos = linspace(1, 128, 200)
+    # theory = 1 - 3 * exp((pi / 3) * (psi_1 - psi_2) - 0.75 * pos)
+    # axarr[1].plot(pos, theory, '--', color='black', linewidth=2)
+    # axarr[0].axvline(Ecouple_est, color='black', linestyle='--', linewidth=2)
 
     axarr[0].yaxis.offsetText.set_fontsize(14)
     axarr[0].tick_params(axis='y', labelsize=14)
-    axarr[0].set_ylabel(r'$\beta \mathcal{P}_{\rm ATP} (\rm s^{-1}) $', fontsize=20)
+    axarr[0].set_ylabel(r'$-\beta \mathcal{P}_{\rm ATP} (\rm s^{-1}) $', fontsize=18)
     axarr[0].spines['right'].set_visible(False)
     axarr[0].spines['top'].set_visible(False)
     axarr[0].spines['bottom'].set_visible(False)
     axarr[0].set_xlim((1.7, 135))
-    axarr[0].set_ylim((None, 31))
+    axarr[0].set_ylim((None, 32))
     # axarr[0].set_yticks([-50, -25, 0, 25])
     # axarr[0].set_yscale('log')
 
-    leg = axarr[0].legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=14, loc='best', frameon=False)
+    leg = axarr[0].legend(title=r'$\beta E_{\rm o} = \beta E_1$', fontsize=14, loc='lower right', frameon=False)
     leg_title = leg.get_title()
     leg_title.set_fontsize(14)
 
-    axarr[1].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=20)
-    axarr[1].set_ylabel(r'$\eta / \eta^{\rm max}$', fontsize=20)
+    axarr[1].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=18)
+    axarr[1].set_ylabel(r'$\eta / \eta^{\rm max}$', fontsize=18)
     axarr[1].set_xscale('log')
     axarr[1].set_xlim((1.7, 135))
-    axarr[1].set_ylim((-0.5, 1.05))
+    axarr[1].set_ylim((-0.51, 1.05))
     axarr[1].spines['right'].set_visible(False)
     axarr[1].spines['top'].set_visible(False)
     axarr[1].spines['bottom'].set_visible(False)
@@ -1369,7 +1369,7 @@ def plot_energy_flow(target_dir):
     phase_array = array([0.0])
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
-    barrier_height = array([2.0])
+    barrier_height = array([0.0])
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
     output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
@@ -1384,6 +1384,7 @@ def plot_energy_flow(target_dir):
                     E1 = E0
                     if E0 == 0.0:
                         Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+                        Ecouple_array_total = setdiff1d(Ecouple_array_total, array([64.0]))
                     else:
                         Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad, Ecouple_array_peak)))
 
@@ -1420,6 +1421,8 @@ def plot_energy_flow(target_dir):
                     #         label=r'$\beta \dot{E}_{\rm o \to 1} - \ell_{\rm o \to 1}$', color='tab:grey')
                     # ax.plot(Ecouple_array_total, learning_rate, '-o', color='tab:orange')
 
+                print(power_y[-1])
+
                 ax.set_ylim((-250, 250))
                 ax.set_xlim((2, None))
 
@@ -1428,8 +1431,8 @@ def plot_energy_flow(target_dir):
                 ax.spines['bottom'].set_visible(False)
                 ax.set_xscale('log')
                 # ax.set_yscale('log')
-                ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
-                ax.set_ylabel(r'$\textrm{Energy flow} \ (\textrm{k}_{\rm B}T \cdot s^{-1})$', fontsize=14)
+                ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
+                ax.set_ylabel(r'$\textrm{Energy flow} \ (k_{\rm B}T \cdot s^{-1})$', fontsize=16)
                 # ax.set_ylabel(r'$\dot{Q}_1 / \dot{E}_{\rm o \to 1}$', fontsize=14)
                 # ax.ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
                 ax.tick_params(axis='both', labelsize=14)
@@ -1934,6 +1937,7 @@ def plot_1D_flux():
         if i == 0:
             ax[i].set_title("$E_{couple}$" + "={}".format(Ecouple))
             ax[i].set_ylabel('$J_i(\\theta_{\\rm 1})$')
+            ax[i].ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
         else:
             ax[i].set_title("{}".format(Ecouple))
         ax[i].set_xlabel('$\\theta_{\\rm i}$')
@@ -2124,8 +2128,8 @@ if __name__ == "__main__":
     # flux_power_efficiency(target_dir)
     # heat_work_info(target_dir)
     # plot_power_Ecouple(target_dir)
-    # plot_power_efficiency_Ecouple(target_dir)
-    plot_power_Ecouple_grid(target_dir)
+    plot_power_efficiency_Ecouple(target_dir)
+    # plot_power_Ecouple_grid(target_dir)
     # plot_power_efficiency_phi(target_dir)
     # plot_power_phi_single(target_dir)
     # plot_nn_power_efficiency_Ecouple(target_dir)
