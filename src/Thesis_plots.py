@@ -1,13 +1,13 @@
 from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asarray, trapz, log, sin, amax, \
-    concatenate, sort, exp, ones
+    concatenate, sort, exp, ones, roll
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from utilities import step_probability_X
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 
-
-N = 540  # N x N grid is used for Fokker-Planck simulations
+N = 720  # N x N grid is used for Fokker-Planck simulations
 dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
@@ -1414,12 +1414,10 @@ def plot_nn_power_efficiency_phi(target_dir):
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2), bbox_inches='tight')
 
 
-def plot_2D_prob_single():
+def plot_2D_prob_single(target_dir):
     # Energy chapter. steady state probability
-    output_file_name1 = (
-            "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pss_2D_single_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
-
+    output_file_name1 = (target_dir + "results/" + "Pss_2D_single_" +
+                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
     Ecouple = 16.0
 
     plt.figure()
@@ -1471,13 +1469,11 @@ def plot_2D_prob_single():
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2), bbox_inches='tight')
 
 
-def plot_2D_cm_rel_prob():
-    output_file_name1 = (
-            "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/results/" +
-            "Pot_scaled_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+def plot_2D_cm_rel_prob(target_dir):
+    output_file_name1 = (target_dir + "results/" + "Pss_cm_diff.pdf")
 
     Ecouple_array = array([0.0, 4.0, 8.0, 16.0, 32.0, 128.0])
-    Ecouplelabels = ['$0.0$', '$4.0$', '$8.0$', '$16.0$', '$32.0$', '$128.0$']
+    Ecouplelabels = ['$0$', '$4$', '$8$', '$16$', '$32$', '$128$']
 
     plt.figure()
     f1, ax1 = plt.subplots(2, 3, figsize=(6, 4))
@@ -1515,10 +1511,8 @@ def plot_2D_cm_rel_prob():
         prob_new = zeros((N, N))
         for i in range(N):
             for j in range(N):
-                if (j < i and j + i < N) or (j > i and N < (j + i)):
-                    prob_new[i, (j + int(N/2)) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
-
-                # prob_new[i, (j + 180) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
+                # if (j < i and j + i < N) or (j > i and N < (j + i)):
+                prob_new[i, (j + int(N/2)) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
 
         cs = ax1[ii // 3, ii % 3].contourf(prob_new.T, cmap=plt.cm.cool, vmin=0, vmax=prob_max)
 
@@ -1543,112 +1537,119 @@ def plot_2D_cm_rel_prob():
 
     cax = f1.add_axes([0.94, 0.09, 0.03, 0.8])
     cbar = f1.colorbar(
-        cs, cax=cax, orientation='vertical', ax=ax1
+        cs, cax=cax, orientation='vertical', ax=ax1, ticks=[0, 10**(-5), 2*10**(-5), 3*10**(-5), 4*10**(-5)]
     )
     cbar.set_label(r'$p_{\rm ss}(\theta_{\rm cm}, \theta_{\rm diff})$', fontsize=14)
     cbar.formatter.set_scientific(True)
     cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
 
+    plt.subplots_adjust(hspace=0.3)
     f1.savefig(output_file_name1.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2), bbox_inches='tight')
 
 
 def plot_entropy_production_Ecouple(target_dir):
     phase_shift = 0.0
-    psi1_array = array([4.0])
-    psi2_array = array([-1.0])
     gamma = 1000
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
+    barrier_height = [0.0, 2.0]
 
     output_file_name = (target_dir + "results/" +
                         "Entropy_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
+    plt.figure()
+    f, ax = plt.subplots(1, 2, figsize=(12, 4))
 
-    for psi_1 in psi1_array:
-        for psi_2 in psi2_array:
-            # calculate entropy production
-            integrate_entropy_X = empty(Ecouple_array_tot.size)
-            integrate_entropy_Y = empty(Ecouple_array_tot.size)
-            integrate_entropy_sum = empty(Ecouple_array_tot.size)
-            integrate_entropy_diff = empty(Ecouple_array_tot.size)
-            integrate_bound = empty(Ecouple_array_tot.size)
+    for i, E0 in enumerate(barrier_height):
+        E1 = E0
+        # calculate entropy production
+        if E0 == 0.0:
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+        else:
+            Ecouple_array_tot = sort(
+                concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
 
-            for ii, Ecouple in enumerate(Ecouple_array_tot):
-                if E0 == 0.0:
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
+        integrate_entropy_X = empty(Ecouple_array_tot.size)
+        integrate_entropy_Y = empty(Ecouple_array_tot.size)
+        integrate_entropy_sum = empty(Ecouple_array_tot.size)
+        integrate_entropy_diff = empty(Ecouple_array_tot.size)
+
+        for ii, Ecouple in enumerate(Ecouple_array_tot):
+            if E0 == 0.0:
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
+                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                   "_outfile.dat")
+            else:
+                if Ecouple in Ecouple_array_peak:
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200511_2kT_extra/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
                 else:
-                    if Ecouple in Ecouple_array_peak:
-                        input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200511_2kT_extra/" +
-                                           "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-                                           "_outfile.dat")
-                    else:
-                        input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip/" +
-                                           "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-                                           "_outfile.dat")
-                try:
-                    data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1,
-                                                                num_minima2, phase_shift),
-                                         usecols=(0, 2, 3, 4, 5, 6, 7, 8))
-                    N = int(sqrt(len(data_array)))
-                    dx = 2 * math.pi / N
-                    positions = linspace(0, 2 * math.pi - dx, N)
-                    # print('Grid size: ', N)
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip/" +
+                                       "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                       "_outfile.dat")
+            try:
+                data_array = loadtxt(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1,
+                                                            num_minima2, phase_shift),
+                                     usecols=(0, 2, 3, 4, 5, 6, 7, 8))
+                N = int(sqrt(len(data_array)))
+                dx = 2 * math.pi / N
 
-                    prob_ss_array = data_array[:, 0].reshape((N, N))
-                    potential_at_pos = data_array[:, 1].reshape((N, N))
-                    drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
-                    diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
+                prob_ss_array = data_array[:, 0].reshape((N, N))
+                drift_at_pos = data_array[:, 2:4].T.reshape((2, N, N))
+                diffusion_at_pos = data_array[:, 4:].T.reshape((4, N, N))
 
-                    for i in range(N):
-                        for j in range(N):
-                            if prob_ss_array[i, j] == 0:
-                                prob_ss_array[i, j] = 10e-18
+                for k in range(N):
+                    for j in range(N):
+                        if prob_ss_array[k, j] == 0:
+                            prob_ss_array[k, j] = 10e-18
 
-                    flux_array = zeros((2, N, N))
-                    calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
-                    flux_array = asarray(flux_array)
+                flux_array = zeros((2, N, N))
+                calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+                flux_array = asarray(flux_array)
 
-                    integrate_entropy_X[ii] = gamma * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
-                    integrate_entropy_Y[ii] = gamma * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
+                integrate_entropy_X[ii] = gamma * trapz(trapz(flux_array[0, ...]**2 / prob_ss_array)) * timescale
+                integrate_entropy_Y[ii] = gamma * trapz(trapz(flux_array[1, ...]**2 / prob_ss_array)) * timescale
 
-                    integrate_entropy_sum[ii] = gamma * trapz(trapz(
-                        (flux_array[0, ...] + flux_array[1, ...]) ** 2 / prob_ss_array)
-                    ) * timescale
-                    integrate_entropy_diff[ii] = gamma * trapz(trapz(
-                        (flux_array[0, ...] - flux_array[1, ...]) ** 2 / prob_ss_array)
-                    ) * timescale
+                integrate_entropy_sum[ii] = gamma * trapz(trapz(
+                    (flux_array[0, ...] + flux_array[1, ...]) ** 2 / prob_ss_array)
+                ) * timescale
+                integrate_entropy_diff[ii] = gamma * trapz(trapz(
+                    (flux_array[0, ...] - flux_array[1, ...]) ** 2 / prob_ss_array)
+                ) * timescale
 
-                except OSError:
-                    print('Missing file')
-                    print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
 
-            # plot entropy production
-            plt.figure()
-            f, ax = plt.subplots(1, 1)
-            ax.plot(Ecouple_array_tot, integrate_entropy_X, '-o', label=r'$\dot{S}^{\rm o}_{\rm i}$', color='tab:blue')
-            ax.plot(Ecouple_array_tot, integrate_entropy_Y, '-v', label=r'$\dot{S}^1_{\rm i}$', color='tab:blue')
-            ax.plot(Ecouple_array_tot, integrate_entropy_Y + integrate_entropy_X, '-o', label=r'$\dot{S}_{\rm i}$',
-                    color='tab:orange')
-            ax.plot(Ecouple_array_tot, 0.5*integrate_entropy_sum, '-o', label=r'$\dot{S}^{\rm cm}_{\rm i}$',
-                    color='tab:green')
-            ax.plot(Ecouple_array_tot, 0.5*integrate_entropy_diff, '-v', label=r'$\dot{S}^{\rm diff}_{\rm i}$',
-                    color='tab:green')
-            ax.set_xlim((2, None))
-            ax.set_ylim((3, 3*10**2))
+        # plot entropy production
+        ax[i].plot(Ecouple_array_tot, integrate_entropy_X, '-o', label=r'$\dot{S}^{\rm o}_{\rm i}$', color='tab:blue')
+        ax[i].plot(Ecouple_array_tot, integrate_entropy_Y, '-v', label=r'$\dot{S}^1_{\rm i}$', color='tab:blue')
+        ax[i].plot(Ecouple_array_tot, integrate_entropy_Y + integrate_entropy_X, '-o', label=r'$\dot{S}_{\rm i}$',
+                color='tab:orange')
+        ax[i].plot(Ecouple_array_tot, 0.5*integrate_entropy_sum, '-o', label=r'$\dot{S}^{\rm cm}_{\rm i}$',
+                color='tab:green')
+        ax[i].plot(Ecouple_array_tot, 0.5*integrate_entropy_diff, '-v', label=r'$\dot{S}^{\rm diff}_{\rm i}$',
+                color='tab:green')
 
-            ax.spines['right'].set_visible(False)
-            ax.spines['top'].set_visible(False)
-            ax.set_xscale('log')
-            ax.set_yscale('log')
-            ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
-            ax.set_ylabel(r'$\dot{S}_{\rm i} \, (s^{-1})$', fontsize=16)
-            ax.tick_params(axis='both', labelsize=16)
-            ax.yaxis.offsetText.set_fontsize(16)
-            ax.legend(fontsize=16, frameon=False, ncol=2)
+        ax[i].set_xlim((2, None))
+        ax[i].set_ylim((3, 3*10**2))
+        ax[i].spines['right'].set_visible(False)
+        ax[i].spines['top'].set_visible(False)
+        ax[i].set_xscale('log')
+        ax[i].set_yscale('log')
+        ax[i].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
+        ax[0].set_ylabel(r'$\dot{S}_{\rm i} \, (s^{-1})$', fontsize=16)
+        ax[i].tick_params(axis='both', labelsize=16)
+        ax[i].yaxis.offsetText.set_fontsize(16)
+        if i == 1:
+            ax[i].legend(fontsize=16, frameon=False, ncol=2)
+            ax[i].set_title(r'$2$', fontsize=16)
+        else:
+            ax[i].set_title(r'$\beta E_{\rm o} = \beta E_1 = 0$', fontsize=16)
 
-            f.tight_layout()
-            f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
+    f.text(0.06, 0.9, r'$\rm a)$', fontsize=16)
+    f.text(0.49, 0.9, r'$\rm b)$', fontsize=16)
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift),
+                  bbox_inches='tight')
 
 
 def plot_power_entropy_correlation(target_dir):
@@ -1658,9 +1659,11 @@ def plot_power_entropy_correlation(target_dir):
     gamma = 1000
     entropy_data = empty((psi1_array.size, psi_ratio.size, 3))
     power_data = empty((psi1_array.size, psi_ratio.size, 3))
+    markerlst = ['s', 'D', 'o']
+    colorlst = ['tab:blue', 'tab:orange', 'tab:green']
 
     output_file_name = (target_dir + "results/" +
-                        "Entropy_diff_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
+                        "Power_entropy_correlation_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
 
     # calculate entropy production rates and determine where curves cross
     for i, psi_1 in enumerate(psi1_array):
@@ -1763,11 +1766,13 @@ def plot_power_entropy_correlation(target_dir):
 
     plt.figure()
     f, ax = plt.subplots(1, 1)
-    # ax.plot(power_data[..., 0], entropy_data[..., 0], 'o')
+
     ax.plot(range(5, 25), range(5, 25), '--', color='gray')
     for i in range(3):
-        ax.errorbar(power_data[i, :, 0], entropy_data[i, :, 0], yerr=entropy_data[i, :, 1:3].T,
-                    xerr=power_data[i, :, 1:3].T, marker='o', fmt='', linestyle='None')
+        for j in range(3):
+            ax.errorbar(power_data[i, j, 0], entropy_data[i, j, 0], yerr=entropy_data[i, j, 1:3].T.reshape((2, 1)),
+                        xerr=power_data[i, j, 1:3].T.reshape((2, 1)), marker=markerlst[j], fmt='', linestyle='None',
+                        color=colorlst[i])
 
     ax.set_xlim((5, 25))
     ax.set_ylim((5, 25))
@@ -1845,9 +1850,9 @@ def plot_power_bound_Ecouple(target_dir):
 
 def plot_power_infoflow(target_dir):
     phase_array = array([0.0])
-    psi1_array = array([8.0])
-    psi2_array = array([-4.0])
-    barrier_height = array([4.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
+    barrier_height = array([2.0])
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
     output_file_name = (target_dir + "results/" + "Power_infoflow_Ecouple_" +
@@ -1889,6 +1894,14 @@ def plot_power_infoflow(target_dir):
                     ax.fill_between([Ecouple_array_total[idx - 1], Ecouple_array_total[idx + 1]], -10 ** 2, 10 ** 2,
                                           facecolor='tab:orange', alpha=0.4)
 
+                    idx = (abs(Ecouple_array_total - Ecouple_array_total[energy_xy.argmin()])).argmin()
+                    ax.fill_between([Ecouple_array_total[idx - 1], Ecouple_array_total[idx + 1]], -10 ** 2, 10 ** 2,
+                                          facecolor='tab:blue', alpha=0.4)
+
+                    idx = (abs(Ecouple_array_total - Ecouple_array_total[learning_rate.argmax()])).argmin()
+                    ax.fill_between([Ecouple_array_total[idx - 1], Ecouple_array_total[idx + 1]], -10 ** 2, 10 ** 2,
+                                    facecolor='tab:green', alpha=0.4)
+
                     ax.plot(Ecouple_array_total, -energy_xy, '-o',
                             label=r'$\beta\mathcal{P}_{\rm o \to 1}$', color='tab:blue')
                     ax.plot(Ecouple_array_total, -power_y, '-o',
@@ -1896,7 +1909,7 @@ def plot_power_infoflow(target_dir):
                     ax.plot(Ecouple_array_total, learning_rate, '-o',
                             label=r'$\dot{I}_1$', color='tab:green')
 
-                ax.set_ylim((0.2, 10 ** 2))
+                ax.set_ylim((0.2, 5 * 10 ** 1))
                 ax.set_xlim((2, None))
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
@@ -1904,7 +1917,7 @@ def plot_power_infoflow(target_dir):
                 ax.set_yscale('log')
                 ax.set_ylabel(r'$\beta \mathcal{P} \ (s^{-1})$', fontsize=16)
                 ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
-                ax.legend(fontsize=16, frameon=False, ncol=1, loc=(0.04, 0.7))
+                ax.legend(fontsize=16, frameon=False, ncol=1, loc=(0.7, 0.3))
                 ax.tick_params(axis='both', labelsize=14)
 
                 f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi), bbox_inches='tight')
@@ -2141,7 +2154,6 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
 
             for j in range(4):
                 axarr[j, i].yaxis.offsetText.set_fontsize(14)
-                # axarr[j, i].ticklabel_format(axis='y', style="sci", scilimits=(0, 0))
                 axarr[j, i].tick_params(axis='y', labelsize=14)
                 axarr[j, i].tick_params(axis='x', labelsize=14)
                 axarr[j, i].set_xscale('log')
@@ -2152,8 +2164,8 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
 
             axarr[0, i].set_ylim((0.05, 120))
             axarr[1, i].set_ylim((0.05, 200))
-            axarr[2, i].set_yscale('linear')
-            axarr[2, i].set_ylim((-1, 1))
+            axarr[2, i].set_yscale('log')
+            axarr[2, i].set_ylim((10**(-2), 10**2))
             axarr[2, i].spines['bottom'].set_visible(False)
             axarr[3, i].set_ylim((0.1, 6.5))
 
@@ -2171,12 +2183,225 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
     f.savefig(output_file_name.format(E0, E1, num_minima1, num_minima2, phi))
 
 
+def plot_info_Ecouple(target_dir):
+    phi = 0.0
+    # dt = 5e-2
+    output_file_name = (target_dir + "results/" + "Infoflow_Ecouple_dt_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+
+    Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+
+    # labels = [r'$360$', r'$720$']
+    labels = [r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$', r'$1$']
+    # labels = [r'$40$', r'$80$']
+    # labels = [r'$\rm nostalgia$', r'$\partial_1 J$', r'$\rm conditional \ entropy$']
+    times = [1e-4, 1e-3, 1e-2, 1e-1, 1]
+
+    plt.figure()
+    f, ax = plt.subplots(1, 1)
+    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip/" +
+                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                        "_outfile.dat")
+
+    for j, dt in enumerate(times):
+        learning_rate = empty(Ecouple_array_total.size)
+        for i, Ecouple in enumerate(Ecouple_array_total):
+            # if j == 0:
+            # if Ecouple in Ecouple_array:
+            #     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/190624_Twopisweep_complete_set/" +
+            #                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+            #                        "_outfile.dat")
+            # elif Ecouple in Ecouple_array_double:
+            #     input_file_name = (
+            #                 "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/191221_morepoints/" +
+            #                 "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+            #                 "_outfile.dat")
+            # else:
+            #     input_file_name = (
+            #                 "/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200511_2kT_extra/" +
+            #                 "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+            #                 "_outfile.dat")
+            # else:
+            #     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201102_steadystate/" +
+            #                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+            #                        "_outfile.dat")
+            try:
+                data_array = loadtxt(
+                    input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
+                N = int(sqrt(len(data_array)))  # check grid size
+                dx = 2 * math.pi / N  # spacing between gridpoints
+
+                prob_ss_array = data_array[:, 0].T.reshape((N, N))
+                drift_at_pos = data_array[:, 3:5].T.reshape((2, N, N))
+                diffusion_at_pos = data_array[:, 5:].T.reshape((4, N, N))
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
+
+            flux_array = zeros((2, N, N))
+            calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+
+            # if j == 0:
+            step_X = empty((N, N))
+            step_probability_X(step_X, prob_ss_array, drift_at_pos, diffusion_at_pos, N, dx, dt)
+
+            mem_denom = ((prob_ss_array.sum(axis=1))[:, None] * (prob_ss_array.sum(axis=0))[None, :])
+            Imem = (prob_ss_array * log(prob_ss_array / mem_denom)).sum(axis=None)
+
+            pred_denom = ((step_X.sum(axis=1))[:, None] * (step_X.sum(axis=0))[None, :])
+            Ipred = (step_X * log(step_X / pred_denom)).sum(axis=None)
+
+            learning_rate[i] = timescale * (Imem - Ipred) / dt
+
+            # elif j == 1:
+            # dflux_array = empty((2, N, N))
+            # derivative_flux(flux_array, dflux_array, N, dx)
+            #
+            # learning_rate[i] = -trapz(trapz(dflux_array[1, ...] * log(prob_ss_array))) * timescale
+
+            # else:
+            #     Hcouple = empty((N, N))
+            #     for ii in range(N):
+            #         for jj in range(N):
+            #             if prob_ss_array[ii, jj] == 0:
+            #                 prob_ss_array[ii, jj] = 10 ** (-18)
+            #
+            #             Hcouple[ii, jj] = -0.5 * Ecouple * sin(positions[ii] - positions[jj])
+            #
+            #     dPxy = empty((N, N))
+            #     calc_derivative(prob_ss_array, dPxy, N, dx, 1)
+            #
+            #     Py = prob_ss_array.sum(axis=0)
+            #     Pxgy = prob_ss_array / Py
+            #     dPxgy = empty((N, N))
+            #     calc_derivative(Pxgy, dPxgy, N, dx, 1)
+            #
+            #     learning_rate[i] = -trapz(trapz(prob_ss_array * Hcouple * (dPxgy / Pxgy))) * timescale * 10**(-3)\
+            #                        -trapz(trapz(prob_ss_array * (dPxy / prob_ss_array) * (dPxgy / Pxgy))) * \
+            #                        timescale * 10 ** (-3)
+
+        ax.plot(Ecouple_array_total, learning_rate, '-o', label=labels[j])
+
+    ax.set_xlim((2, None))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_ylabel(r'$\dot{I}_1 \ (s^{-1})$', fontsize=16)
+    ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
+    ax.legend(fontsize=14, frameon=False, ncol=1, title_fontsize=16)
+    ax.tick_params(axis='both', labelsize=14)
+
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2), bbox_inches='tight')
+
+
+def plot_flux_1D(target_dir):
+    # Energy chapter. energy flows vs coupling strength
+    # input power, output power, heat flows X and Y, power from X to Y
+    lines = ['solid', 'dashed', 'dashdot']
+    labels = [r'$0$', r'$1/3$', r'$2/3$']
+    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip/" +
+                       "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                       "_outfile.dat")
+    output_file_name = (target_dir + "results/" + "Flux_1D_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_.pdf")
+
+    plt.figure()
+    f, ax = plt.subplots(1, 1)
+
+    Ecouple = 16.0
+    try:
+        data_array = loadtxt(
+            input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, 0.0)
+        )
+        N = int(sqrt(len(data_array)))  # check grid size
+        dx = 2 * math.pi / N  # spacing between gridpoints
+        positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
+        print('Grid size: ', N)
+
+        prob_ss_array = data_array[:, 0].reshape((N, N))
+        drift_at_pos = data_array[:, 3:5].T.reshape((2, N, N))
+        diffusion_at_pos = data_array[:, 5:].T.reshape((4, N, N))
+    except OSError:
+        print('Missing file')
+        print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+
+    flux_array = zeros((2, N, N))
+    calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
+
+    ax.axhline(0, color='black')
+
+    for i in range(3):
+        ax.plot(positions, roll(flux_array[1, :, i*N//3], 2*i*N//3), label=labels[i], linestyle=lines[i])
+
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.set_xlabel(r'$\theta_{\rm o}$', fontsize=16)
+    ax.set_ylabel(r'$J_1(\theta_{\rm o}, \theta_1)$', fontsize=16)
+    ax.set_xticks([0, pi/3, 2*pi/3, pi, 4*pi/3, 5*pi/6, 2*pi])
+    ax.set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+    ax.tick_params(axis='both', labelsize=14)
+    ax.yaxis.offsetText.set_fontsize(14)
+    ax.legend(fontsize=14, frameon=False, loc='best', title=r'$\rm Slice \ at \ \theta_1$', title_fontsize=16)
+
+    f.tight_layout()
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+
+
+def plot_info_Ecouple_barrier(target_dir):
+    phi = 0.0
+    barrier_height = [0.0, 2.0, 4.0]
+    labels = [r'$0$', r'$2$', r'$4$']
+
+    plt.figure()
+    f, ax = plt.subplots(1, 1)
+
+    input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
+                       "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+    output_file_name = (target_dir + "results/" + "Infoflow_Ecouple_error_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}" + "_.pdf")
+
+    for j, E0 in enumerate(barrier_height):
+        E1 = E0
+        if E0 == 0:
+            Ecouple_array_total = Ecouple_array
+        else:
+            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+        learning_rate = empty(Ecouple_array_total.size)
+        for i, Ecouple in enumerate(Ecouple_array_total):
+            try:
+                data_array = loadtxt(
+                    input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+                learning_rate[i] = data_array[6]
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+
+        if E0 == 0:
+            ax.plot(Ecouple_array_total, -learning_rate, 'o-', label=labels[j])
+        else:
+            ax.plot(Ecouple_array_total, learning_rate, 'o-', label=labels[j])
+
+    ax.set_xlim((2, None))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_ylabel(r'$\dot{I}_1 \ (s^{-1})$', fontsize=16)
+    ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
+    ax.legend(fontsize=14, frameon=False, ncol=1, title_fontsize=16, title=r'$\beta E_{\rm o} = \beta E_1$')
+    ax.tick_params(axis='both', labelsize=14)
+
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2), bbox_inches='tight')
+
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # heat_work_info(target_dir)
     # plot_power_efficiency_Ecouple_hor(target_dir)
     # plot_2D_prob_flux_thesis()
-    plot_energy_flow(target_dir)
+    # plot_energy_flow(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_efficiency_Ecouple_grid(target_dir)
     # plot_nn_power_efficiency_Ecouple(target_dir)
@@ -2192,4 +2417,7 @@ if __name__ == "__main__":
     # plot_power_infoflow(target_dir)
     # plot_infoflow_Ecouple_grid(target_dir)
     # plot_2D_prob_double(target_dir)
-    # plot_super_grid_peak(target_dir)
+    plot_super_grid_peak(target_dir)
+    # plot_info_Ecouple(target_dir)
+    # plot_flux_1D(target_dir)
+    # plot_info_Ecouple_barrier(target_dir)

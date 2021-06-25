@@ -16,8 +16,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 4.0  # chemical driving force on Fo
-psi_2 = -2.0  # chemical driving force on F1
+psi_1 = 8.0  # chemical driving force on Fo
+psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -1481,7 +1481,7 @@ def compare_info(target_dir):
     learning_rate = zeros((4, 2, Ecouple_array_tot.size))
     dt = 5e-2
 
-    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip/" +
+    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200921_dip/" +
                         "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                         "_outfile.dat")
     output_file_name = (
@@ -1561,8 +1561,8 @@ def compare_info(target_dir):
         learning_rate[3, 1, ii] = -trapz(trapz(prob_ss_array * (dPxy/prob_ss_array) * (dPxgy/Pxgy))) * timescale * 10 ** (-3)
 
     # for i in range(4):
-    ax.plot(Ecouple_array_tot, learning_rate[3, 0, :], '-o', markersize=8, label=r'$\ell^{\rm F}_1$')
-    ax.plot(Ecouple_array_tot, learning_rate[3, 1, :], '-o', markersize=8, label=r'$\ell^{\rm B}_1$')
+    # ax.plot(Ecouple_array_tot, learning_rate[3, 0, :], '-o', markersize=8, label=r'$\ell^{\rm F}_1$')
+    # ax.plot(Ecouple_array_tot, learning_rate[3, 1, :], '-o', markersize=8, label=r'$\ell^{\rm B}_1$')
     ax.plot(Ecouple_array_tot, learning_rate[3, 1, :] + learning_rate[3, 0, :], '-o', markersize=8, label='$\ell_1$')
 
     ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
@@ -1800,11 +1800,11 @@ if __name__ == "__main__":
     # plot_ITQ_phi(target_dir, 'nostalgia', 0.001)
     # plot_super_grid(target_dir, 5e-2)
     # plot_super_grid_peak(target_dir, 5e-2)
-    plot_super_grid_barrier(target_dir)
+    # plot_super_grid_barrier(target_dir)
     # plot_super_grid_phi(target_dir, 5e-2)
     # plot_nn_learning_rate_Ecouple(target_dir, 5e-2)
     # plot_nn_learning_rate_phi(target_dir, 5e-2)
     # plot_n0_learning_rate_Ecouple(target_dir, 5e-2)
-    # compare_info(target_dir)
+    compare_info(target_dir)
     # plot_entropy_production_Ecouple(target_dir)
     # plot_entropy_derivative_Ecouple(target_dir)
