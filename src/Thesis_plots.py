@@ -1662,8 +1662,7 @@ def plot_power_entropy_correlation(target_dir):
     markerlst = ['s', 'D', 'o']
     colorlst = ['tab:blue', 'tab:orange', 'tab:green']
 
-    output_file_name = (target_dir + "results/" +
-                        "Power_entropy_correlation_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
+    output_file_name = (target_dir + "results/" + "Power_entropy_correlation" + ".pdf")
 
     # calculate entropy production rates and determine where curves cross
     for i, psi_1 in enumerate(psi1_array):
@@ -1784,7 +1783,7 @@ def plot_power_entropy_correlation(target_dir):
     ax.tick_params(axis='both', labelsize=16)
     ax.yaxis.offsetText.set_fontsize(16)
 
-    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift), bbox_inches='tight')
+    f.savefig(output_file_name, bbox_inches='tight')
 
 
 def plot_power_bound_Ecouple(target_dir):
@@ -1832,7 +1831,7 @@ def plot_power_bound_Ecouple(target_dir):
                     ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\beta \mathcal{P}_{\rm H^+}$', color='tab:blue')
                     ax.plot(Ecouple_array_total, -power_y, '-o', label=r'$-\beta \mathcal{P}_{\rm ATP}$', color='tab:orange')
                     ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
-                            label=r'$\beta \mathcal{P}_{\rm o \to 1} - \dot{I}_1$', color='tab:gray')
+                            label=r'$\beta \mathcal{P}_{\rm o \to 1} + \dot{I}_{\rm o}$', color='tab:gray')
 
                 ax.set_ylim((7, 2 * 10 ** 2))
                 ax.set_xlim((2, None))
@@ -2413,11 +2412,11 @@ if __name__ == "__main__":
     # plot_2D_cm_rel_prob()
     # plot_entropy_production_Ecouple(target_dir)
     # plot_power_entropy_correlation(target_dir)
-    # plot_power_bound_Ecouple(target_dir)
+    plot_power_bound_Ecouple(target_dir)
     # plot_power_infoflow(target_dir)
     # plot_infoflow_Ecouple_grid(target_dir)
     # plot_2D_prob_double(target_dir)
-    plot_super_grid_peak(target_dir)
+    # plot_super_grid_peak(target_dir)
     # plot_info_Ecouple(target_dir)
     # plot_flux_1D(target_dir)
     # plot_info_Ecouple_barrier(target_dir)
