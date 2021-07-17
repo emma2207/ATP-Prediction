@@ -15,8 +15,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -2412,7 +2412,7 @@ def plot_nn_learning_rate_Ecouple(input_dir):  # plot power and efficiency as a 
     axarr.axhline(0, color='black', label='_nolegend_')
 
     output_file_name = input_dir + "results/" + \
-                       "Learning_rate_Ecouple_try_scaled_nn_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log.pdf"
+                       "Learning_rate_Ecouple_try3_scaled_nn_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log.pdf"
 
     # Fokker-Planck results (barriers)
     for j, num_min in enumerate(min_array):
@@ -2427,14 +2427,14 @@ def plot_nn_learning_rate_Ecouple(input_dir):  # plot power and efficiency as a 
                 print('Missing file')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
 
-        axarr.plot(((2*pi/num_min)*Ecouple_array_tot**(0.5)), learning_rate[:, j],
+        axarr.plot(((2*pi/num_min)**2*Ecouple_array_tot), learning_rate[:, j],
                    color=color_lst[j], label=num_min, markersize=6, marker=markerlst[j], linestyle='-')
 
     # formatting
     axarr.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     axarr.yaxis.offsetText.set_fontsize(16)
     axarr.tick_params(axis='both', labelsize=16)
-    axarr.set_xlabel(r'$\frac{2 \pi}{n}\sqrt{ \beta E_{\rm couple} }$', fontsize=20)
+    axarr.set_xlabel(r'$\left(\frac{2 \pi}{n} \right)^2 \cdot \beta E_{\rm couple} $', fontsize=20)
     axarr.set_ylabel(r'$\dot{I}_1 \, (s^{-1})$', fontsize=20)
     axarr.spines['right'].set_visible(False)
     axarr.spines['top'].set_visible(False)
@@ -2560,8 +2560,8 @@ if __name__ == "__main__":
     # plot_infoflow_Ecouple_grid(target_dir)
     # plot_2D_prob_double(target_dir)
     # plot_super_grid_peak(target_dir)
-    plot_info_Ecouple(target_dir)
+    # plot_info_Ecouple(target_dir)
     # plot_flux_1D(target_dir)
     # plot_info_Ecouple_barrier(target_dir)
-    # plot_nn_learning_rate_Ecouple(target_dir)
+    plot_nn_learning_rate_Ecouple(target_dir)
     # plot_super_grid_nn(target_dir)
