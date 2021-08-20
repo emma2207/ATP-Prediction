@@ -3,7 +3,6 @@ from numpy import array, linspace, loadtxt, append, pi, empty, sqrt, zeros, asar
 import math
 import matplotlib.pyplot as plt
 from matplotlib import rc
-from matplotlib.ticker import MultipleLocator
 from utilities import step_probability_X
 rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
@@ -17,8 +16,8 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
-num_minima1 = 3.0  # number of barriers in Fo's landscape
-num_minima2 = 3.0  # number of barriers in F1's landscape
+num_minima1 = 12.0  # number of barriers in Fo's landscape
+num_minima2 = 12.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
@@ -219,10 +218,13 @@ def calc_derivative(flux_array, dflux_array, N, dx, k):
 
 def heat_work_info(target_dir):
     # data processing of raw simulation data into averaged quantities
-    Ecouple_array_tot = array([64.0])
-    psi1_array = array([8.0, 4.0])
-    psi2_array = array([-4.0, -2.0, -1.0])
+    Ecouple_array_tot = array([32.0, 45.25, 64.0, 90.51, 128.0, 181.0, 256.0, 362.0, 512.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
     phase_array = array([0.0])
+
+    output_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
     for psi_1 in psi1_array:
         for psi_2 in psi2_array:
@@ -235,12 +237,9 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/210521/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210818_collapsed_curve_spectral/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
-                    output_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
-                                        "power_heat_info_" +
-                                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
 
                     print("Calculating stuff for " + f"psi_1 = {psi_1}, psi_2 = {psi_2}, " +
                           f"Ecouple = {Ecouple}, num_minima1 = {num_minima1}, num_minima2 = {num_minima2}")
@@ -1804,9 +1803,9 @@ def plot_entropy_production_Ecouple(target_dir):
         ax[i].plot(Ecouple_array_tot, integrate_entropy_Y, '-v', label=r'$\dot{S}^1_{\rm i}$', color='tab:blue')
         ax[i].plot(Ecouple_array_tot, integrate_entropy_Y + integrate_entropy_X, '-o', label=r'$\dot{S}_{\rm i}$',
                 color='tab:orange')
-        ax[i].plot(Ecouple_array_tot, 0.5*integrate_entropy_sum, '-o', label=r'$\dot{S}^{\rm \bar{\theta}}_{\rm i}$',
+        ax[i].plot(Ecouple_array_tot, 0.5*integrate_entropy_sum, '-o', label=r'$\dot{S}^{\bar{\theta}}_{\rm i}$',
                 color='tab:green')
-        ax[i].plot(Ecouple_array_tot, 0.5*integrate_entropy_diff, '-v', label=r'$\dot{S}^{\rm \frac{\Delta \theta}{2}}_{\rm i}$',
+        ax[i].plot(Ecouple_array_tot, 0.5*integrate_entropy_diff, '-v', label=r'$\dot{S}^{\Delta \theta}_{\rm i}$',
                 color='tab:green')
 
         ax[i].set_xlim((2, None))
@@ -2917,7 +2916,7 @@ def plot_super_grid_nn(target_dir):  # grid of plots of output power, entropy ra
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    # heat_work_info(target_dir)
+    heat_work_info(target_dir)
     # plot_power_efficiency_Ecouple_hor(target_dir)
     # plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
@@ -2932,7 +2931,7 @@ if __name__ == "__main__":
     # plot_energy_flow_zoom(target_dir)
     # plot_2D_prob_single(target_dir)
     # plot_2D_cm_rel_prob(target_dir)
-    plot_entropy_production_Ecouple(target_dir)
+    # plot_entropy_production_Ecouple(target_dir)
     # plot_power_entropy_correlation(target_dir)
     # plot_power_bound_Ecouple(target_dir)
     # plot_power_infoflow(target_dir)
