@@ -16,8 +16,8 @@ E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
 psi_1 = 4.0  # chemical driving force on Fo
 psi_2 = -2.0  # chemical driving force on F1
-num_minima1 = 1.0  # number of barriers in Fo's landscape
-num_minima2 = 1.0  # number of barriers in F1's landscape
+num_minima1 = 3.0  # number of barriers in Fo's landscape
+num_minima2 = 3.0  # number of barriers in F1's landscape
 
 min_array = array([1.0, 2.0, 3.0, 6.0, 12.0])  # number of energy minima/ barriers
 
@@ -218,11 +218,7 @@ def calc_derivative(flux_array, dflux_array, N, dx, k):
 
 def heat_work_info(target_dir):
     # data processing of raw simulation data into averaged quantities
-    # Ecouple_array_tot = array([32.0, 45.25, 64.0, 90.51, 128.0, 181.0, 256.0, 362.0, 512.0])
-    # Ecouple_array_tot = array([11.31, 16.0, 22.62, 32.0, 45.25, 64.0, 90.51, 128.0, 181.0, 256.0, 362.0, 512.0])
-    # Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-    # Ecouple_array_tot = array([0.89, 1.26, 1.78, 2.52, 3.56, 5.03, 7.11, 10.06, 14.22, 20.11, 28.44, 40.23, 56.89])
-    Ecouple_array_tot = array([0.22, 0.31, 0.44, 0.63, 0.89, 1.26, 1.78, 2.52, 3.56, 5.03, 7.11, 10.06, 14.22])
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
     phase_array = array([0.0])
@@ -241,7 +237,7 @@ def heat_work_info(target_dir):
 
             for Ecouple in Ecouple_array_tot:
                 for ii, phase_shift in enumerate(phase_array):
-                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/210818_collapsed_curve_spectral/" +
+                    input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/201016_dip/" +
                                        "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
                                        "_outfile.dat")
 

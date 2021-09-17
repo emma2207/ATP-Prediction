@@ -412,7 +412,7 @@ def plot_entropy_production_Ecouple(target_dir):
 
         # calculate entropy production
         if E0 == 0.0:
-            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double2)))
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
         else:
             Ecouple_array_tot = sort(
                 concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
@@ -444,15 +444,15 @@ def plot_entropy_production_Ecouple(target_dir):
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
-    ax.set_ylabel(r'$\dot{S} \, (\rm s^{-1})$', fontsize=14)
+    ax.set_ylabel(r'$\dot{\Sigma} \, (\rm s^{-1})$', fontsize=14)
     ax.tick_params(axis='both', labelsize=12)
     ax.yaxis.offsetText.set_fontsize(12)
 
     f.legend(handles=[Line2D([0], [0], color='black', linestyle='dashed', lw=2, label=r'$0$'),
                       Line2D([0], [0], color='black', linestyle='solid', lw=2, label=r'$2$')],
              loc=[0.75, 0.7], frameon=False, fontsize=14, ncol=1, title=r'$\beta E^{\ddagger}$', title_fontsize=14)
-    f.text(0.35, 0.75, r'$\dot{S}^{\rm X}$', fontsize=14, color='tab:orange')
-    f.text(0.2, 0.45, r'$\dot{S}^{\rm Y}$', fontsize=14, color='tab:red')
+    f.text(0.35, 0.75, r'$\dot{\Sigma}^{\rm X}$', fontsize=14, color='tab:orange')
+    f.text(0.2, 0.45, r'$\dot{\Sigma}^{\rm Y}$', fontsize=14, color='tab:red')
 
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift), bbox_inches='tight')
 
@@ -527,57 +527,41 @@ def plot_power_bound_Ecouple(target_dir):
 
 
 def plot_nn_learning_rate_Ecouple(input_dir):  # plot power and efficiency as a function of the coupling strength
-    markerlst = ['D', 's', 'o', 'v', 'x', 'p']
-    color_lst = ['C2', 'C3', 'C1', 'C4', 'C6', 'C6']
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad, Ecouple_array_peak)))
     phi = 0.0
-    learning_rate = zeros((Ecouple_array_tot.size, min_array.size))
+    learning_rate = zeros(Ecouple_array_tot.size)
 
-    f, axarr = plt.subplots(2, 1, sharey='row', figsize=(5, 7))
+    f, axarr = plt.subplots(1, 1, sharey='row', figsize=(6, 4))
 
     output_file_name = input_dir + "results/" + \
-                       "Learning_rate_Ecouple_try3_scaled_nn_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log.pdf"
+                       "Learning_rate_Ecouple_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}_log.pdf"
 
     # Fokker-Planck results (barriers)
-    for j, num_min in enumerate(min_array):
-        for ii, Ecouple in enumerate(Ecouple_array_tot):
-            input_file_name = target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + \
-                              "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + \
-                              "_outfile.dat"
-            try:
-                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
-                learning_rate[ii, j] = data_array[6]
-            except OSError:
-                print('Missing file')
-                print(input_file_name.format(E0, E1, psi_1, psi_2, num_min, num_min, Ecouple))
+    for ii, Ecouple in enumerate(Ecouple_array_tot):
+        input_file_name = target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + \
+                          "power_heat_info_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + \
+                          "_outfile.dat"
+        try:
+            data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+            learning_rate[ii] = data_array[6]
+        except OSError:
+            print('Missing file')
+            print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
-        axarr[0].plot(Ecouple_array_tot, learning_rate[:, j],
-                      color=color_lst[j], label=num_min, marker=markerlst[j], linestyle='-')
-        axarr[1].plot((2*pi/num_min)*Ecouple_array_tot**0.5, learning_rate[:, j],
-                   color=color_lst[j], label=num_min, marker=markerlst[j], linestyle='-')
+    axarr.plot(Ecouple_array_tot, learning_rate, color='C6', linestyle='-', marker='o')
 
-    for i in range(2):
-        # formatting
-        axarr[i].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-        axarr[i].yaxis.offsetText.set_fontsize(12)
-        axarr[i].tick_params(axis='both', labelsize=12)
-        axarr[i].set_ylabel(r'$\dot{I}_1 \, (\rm s^{-1})$', fontsize=14)
-        axarr[i].spines['right'].set_visible(False)
-        axarr[i].spines['top'].set_visible(False)
-        axarr[i].set_xscale('log')
-        axarr[i].set_yscale('log')
-        axarr[i].set_ylim([2*10**(-2), None])
+    axarr.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+    axarr.yaxis.offsetText.set_fontsize(12)
+    axarr.tick_params(axis='both', labelsize=12)
+    axarr.set_ylabel(r'$-\dot{I}_{\rm X} \, (\rm s^{-1})$', fontsize=14)
+    axarr.spines['right'].set_visible(False)
+    axarr.spines['top'].set_visible(False)
+    axarr.set_xscale('log')
+    axarr.set_yscale('log')
+    axarr.set_ylim([7*10**(-2), None])
 
-    axarr[0].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
-    axarr[1].set_xlabel(r'$\frac{2 \pi}{n} \cdot \sqrt{\beta E_{\rm couple} }$', fontsize=14)
+    axarr.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
 
-    leg = axarr[1].legend(['$1$', '$2$', '$3$', '$6$', '$12$'], title=r'$n_{\rm o} = n_1$', fontsize=14, ncol=1,
-                          frameon=False, bbox_to_anchor=(0.75, 0.25), title_fontsize=14)
-    leg_title = leg.get_title()
-    leg_title.set_fontsize(14)
-
-    f.text(0.0, 0.87, r'$\rm a)$', fontsize=14)
-    f.text(0.0, 0.45, r'$\rm b)$', fontsize=14)
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, phi), bbox_inches='tight')
 
 
@@ -1089,12 +1073,12 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
-        ax.set_ylabel(r'$\dot{S} \ \rm (s^{-1})$', fontsize=14)
+        ax.set_ylabel(r'$\dot{\Sigma} \ \rm (s^{-1})$', fontsize=14)
         ax.tick_params(axis='both', labelsize=14)
         ax.yaxis.offsetText.set_fontsize(14)
 
-    f.text(0.15, 0.3, r'$\dot{S}^{\rm \bar{X}}$', fontsize=14)
-    f.text(0.35, 0.75, r'$\dot{S}^{\rm \Delta X}$', fontsize=14)
+    f.text(0.15, 0.3, r'$\dot{\Sigma}^{\rm \bar{X}}$', fontsize=14)
+    f.text(0.35, 0.75, r'$\dot{\Sigma}^{\rm \Delta X}$', fontsize=14)
     f.legend(handles=[Line2D([0], [0], color='black', linestyle='dashed', lw=2, label=r'$0$'),
                       Line2D([0], [0], color='black', linestyle='solid', lw=2, label=r'$2$')],
              loc=[0.75, 0.7], frameon=False, fontsize=14, ncol=1, title=r'$\beta E^{\ddagger}$', title_fontsize=14)
@@ -1205,7 +1189,7 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # plot_energy_flow(target_dir)
-    # plot_entropy_production_Ecouple(target_dir)
+    plot_entropy_production_Ecouple(target_dir)
     # plot_power_bound_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple_inset(target_dir)
@@ -1213,4 +1197,4 @@ if __name__ == "__main__":
     # plot_2D_prob_triple(target_dir)
     # plot_2D_prob_rot(target_dir)
     # plot_EPR_cm_diff_Ecouple(target_dir)
-    plot_super_grid_peak(target_dir)
+    # plot_super_grid_peak(target_dir)
