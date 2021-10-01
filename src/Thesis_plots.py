@@ -430,7 +430,7 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
     # plot power and efficiency vs coupling strength
     clr = ['C1', 'C9']
 
-    barrier_heights = array([2.0, 4.0])
+    barrier_heights = array([2.0])
     barrier_height_labels = [r'$2$', r'$4$']
 
     output_file_name = (target_dir + "results/" + "P_ATP_eff_Ecouple_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_phi_{4}" +
@@ -441,7 +441,7 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
     axarr[0].axhline(0, color='black', linewidth=1)  # x-axis
     # maxpower = 2 * pi * 0.000085247 * timescale  # max power for E0=E1=2
     # maxpower = 30.  # maxpower for E0=E1=0
-    # axarr[0].axhline(maxpower, linestyle=':', color=clr, linewidth=2, label=r'$\rm semi \mbox{-} analytical$')
+    # axarr[0].axhline(maxpower, linestyle=':', color='black', linewidth=2, label=r'$\rm semi \mbox{-} analytical$')
 
     # efficiency plot
     axarr[1].axhline(0, color='black', linewidth=1)  # x axis
@@ -502,6 +502,8 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
                       markersize=8)
         axarr[1].plot(Ecouple_array_tot, eff_array / (psi_2 / psi_1), 'o', markersize=8, color=clr[j])
 
+    axarr[0].axvline(11.7, linestyle='--', color='black', linewidth=4)
+
     axarr[0].yaxis.offsetText.set_fontsize(14)
     axarr[0].tick_params(axis='y', labelsize=14)
     axarr[0].set_ylabel(r'$-\beta \mathcal{P}_{\rm ATP} \ (\rm s^{-1}) $', fontsize=18)
@@ -528,8 +530,8 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
     axarr[1].set_yticks([-0.5, 0, 0.5, 1.0])
     axarr[1].tick_params(axis='both', labelsize=14)
 
-    f.text(0.04, 0.95, r'$\rm{a)}$', ha='center', fontsize=18)
-    f.text(0.04, 0.49, r'$\rm{b)}$', ha='center', fontsize=18)
+    # f.text(0.04, 0.95, r'$\rm{a)}$', ha='center', fontsize=18)
+    # f.text(0.04, 0.49, r'$\rm{b)}$', ha='center', fontsize=18)
     f.subplots_adjust(hspace=0.01)
     f.tight_layout()
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2))
@@ -2915,9 +2917,9 @@ def plot_super_grid_nn(target_dir):  # grid of plots of output power, entropy ra
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    heat_work_info(target_dir)
+    # heat_work_info(target_dir)
     # plot_power_efficiency_Ecouple_hor(target_dir)
-    # plot_power_efficiency_Ecouple_ver(target_dir)
+    plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
     # plot_energy_flow(target_dir)
     # plot_power_Ecouple_grid(target_dir)

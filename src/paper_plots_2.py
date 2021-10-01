@@ -654,7 +654,7 @@ def plot_power_entropy_correlation(target_dir):
     infoflow_data = empty((psi1_array.size, psi_ratio.size, 3))
     bound_data = empty((psi1_array.size, psi_ratio.size, 3))
     markerlst = ['s', 'D', 'o']
-    sizes = [90, 40, 40]
+    sizes = [100, 100, 100]
     colorlst = ['darkblue', 'purple', 'darkred']
 
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
@@ -774,14 +774,14 @@ def plot_power_entropy_correlation(target_dir):
     for i in range(3):
         for j in range(3):
             markers, caps, bars = ax[1].errorbar(power_data[i, j, 0], entropy_data[i, j, 0], yerr=entropy_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[i], marker=None)
-            ax[1].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[j], linestyle='None',
-                           color=colorlst[i], s=sizes[j], alpha=0.5)
+                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
+            ax[1].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[i], linestyle='None',
+                           color=colorlst[j], s=sizes[i], alpha=0.5)
             [bar.set_alpha(0.5) for bar in bars]
             markers, caps, bars = ax[0].errorbar(power_data[i, j, 0], bound_data[i, j, 0], yerr=bound_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=bound_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[i], marker=None)
-            ax[0].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[j], linestyle='None',
-                          color=colorlst[i], s=sizes[j], alpha=0.5)
+                           xerr=bound_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
+            ax[0].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[i], linestyle='None',
+                          color=colorlst[j], s=sizes[i], alpha=0.5)
             [bar.set_alpha(0.5) for bar in bars]
             # markers, caps, bars = ax[2].errorbar(power_data[i, j, 0], infoflow_data[i, j, 0], yerr=infoflow_data[i, j, 1:3].T.reshape((2, 1)),
             #                xerr=power_data[i, j, 1:3].T.reshape((2, 1)), marker=markerlst[j], fmt='', linestyle='None',
@@ -802,19 +802,19 @@ def plot_power_entropy_correlation(target_dir):
     ax[-1].set_xticks([5, 10, 15, 20, 25])
     ax[-1].set_xticklabels(['$5$', '$10$', '$15$', '$20$', '$25$'])
     ax[-1].set_xlabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \mathcal{P}_{\rm Y}$', fontsize=14)
-    ax[0].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmin}} \ |\dot{S}^{\rm Y} - \dot{S}^{\rm X}|$', fontsize=14)
+    ax[0].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmin}} \ |\dot{\Sigma}_{\rm Y} - \dot{\Sigma}_{\rm X}|$', fontsize=14)
     ax[1].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ (\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X})$', fontsize=14)
     # ax[2].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \dot{I}_{\rm Y}$', fontsize=14)
 
     f.legend(handles=[Line2D([0], [0], color=colorlst[0], lw=2, label=r'$2$', alpha=0.5),
                       Line2D([0], [0], color=colorlst[1], lw=2, label=r'$4$', alpha=0.5),
                       Line2D([0], [0], color=colorlst[2], lw=2, label=r'$8$', alpha=0.5)],
-             loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$\mu_{\rm X}$', title_fontsize=14)
+             loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
 
     f.legend(handles=[Line2D([0], [0], marker=markerlst[0], color='black', lw=0, label=r'$2$', alpha=0.5),
                       Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=0.5),
                       Line2D([0], [0], marker=markerlst[2], color='black', lw=0, label=r'$8$', alpha=0.5)],
-             loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
+             loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$\beta \mu_{\rm X}$', title_fontsize=14)
 
     f.subplots_adjust(hspace=0.1)
     f.text(-0.03, 0.88, r'$\rm a)$', fontsize=14)
@@ -863,40 +863,43 @@ def plot_2D_prob_triple(target_dir):
         pcond = prob_ss_array / pmarg[:, None]
 
         # heatmap part
-        cs = ax1[0, i].contourf(N*pcond.T, cmap=plt.cm.cool, vmin=0, vmax=max_prob*N)
+        cs = ax1[0, i].contourf((N/(2*pi))*pcond.T, cmap=plt.cm.cool, vmin=0, vmax=max_prob*(N/(2*pi)))
 
-        ax1[0, i].axvline(5 * N / 12, color='darkgray')
-        ax1[0, i].axvline(3 * N / 12, color='gray')
+        ax1[0, i].axvline(5 * N / 12, color='darkorange')
+        ax1[0, i].axvline(3 * N / 12, color='orangered')
 
         ax1[0, i].spines['right'].set_visible(False)
         ax1[0, i].spines['top'].set_visible(False)
+        ax1[0, i].spines['left'].set_visible(False)
         ax1[0, i].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
         ax1[0, i].set_title(r'$%.f$' % Ecouplelst[i], fontsize=10)
         ax1[0, i].tick_params(axis='both', labelsize=8)
         ax1[0, i].yaxis.offsetText.set_fontsize(8)
-        ax1[0, i].set_xlabel(r'$x \ (\rm rev)$', fontsize=10)
+        ax1[0, i].set_xlabel(r'$\theta_{\rm o}$', fontsize=10)
         ax1[0, i].set_xticks([0, N / 6, N / 3, N / 2, 2 * N / 3, 5 * N / 6, N])
-        ax1[0, i].set_xticklabels(['$0$', '', r'$\frac{1}{3}$', '', r'$\frac{2}{3}$', '', '$1$'])
+        ax1[0, i].set_xticklabels(['$0$', '', r'$\frac{\pi}{3}$', '', r'$\frac{2 \pi}{3}$', '', r'$2 \pi$'])
 
         # slices
-        ax1[1, i].plot(N*pcond[3 * N // 12], color='gray')
-        ax1[1, i].plot(N*pcond[5 * N // 12], color='darkgray')
+        ax1[1, i].plot((N/(2*pi))*pcond[3 * N // 12], color='orangered')
+        ax1[1, i].plot((N/(2*pi))*pcond[5 * N // 12], color='darkorange')
 
         ax1[1, i].spines['right'].set_visible(False)
         ax1[1, i].spines['top'].set_visible(False)
-        ax1[1, i].set_xlabel(r'$y \ (\rm rev)$', fontsize=10)
+        ax1[1, i].spines['left'].set_visible(False)
+        ax1[1, i].set_xlabel(r'$\theta_1$', fontsize=10)
         ax1[1, i].set_xticks([0, N / 6, N / 3, N / 2, 2 * N / 3, 5 * N / 6, N])
-        ax1[1, i].set_xticklabels(['$0$', '', r'$\frac{1}{3}$', '', r'$\frac{2}{3}$', '', '$1$'])
+        ax1[1, i].set_xticklabels(['$0$', '', r'$\frac{\pi}{3}$', '', r'$\frac{2 \pi}{3}$', '', r'$2 \pi$'])
         # ax1[1, i].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
         ax1[1, i].tick_params(axis='both', labelsize=8)
         ax1[1, i].yaxis.offsetText.set_fontsize(8)
         ax1[1, i].set_xlim((0, N))
-        ax1[1, i].set_ylim((0, 21))
+        ax1[1, i].set_ylim((0, 3.5))
+        ax1[1, i].set_yticks([0, 1, 2, 3])
 
     ax1[0, 0].set_title(r'$\beta E_{\rm couple} = %.f$' % Ecouplelst[0], fontsize=10)
-    ax1[0, 0].set_ylabel(r'$y \ (\rm rev)$', fontsize=10)
-    ax1[0, 0].set_yticklabels(['$0$', '', r'$\frac{1}{3}$', '', r'$\frac{2}{3}$', '', '$1$'])
-    ax1[1, 0].set_ylabel(r'$p_{\rm ss}(y|x)$', fontsize=10)
+    ax1[0, 0].set_ylabel(r'$\theta_1$', fontsize=10)
+    ax1[0, 0].set_yticklabels(['$0$', '', r'$\frac{\pi}{3}$', '', r'$\frac{2 \pi}{3}$', '', r'$2 \pi$'])
+    ax1[1, 0].set_ylabel(r'$p_{\rm ss}(\theta_1|\theta_{\rm o})$', fontsize=10)
 
     f1.subplots_adjust(hspace=0.65)
 
@@ -909,7 +912,7 @@ def plot_2D_prob_triple(target_dir):
     # cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
 
-    f1.text(0.45, 1.2, r'$p_{\rm ss}(y|x)$', fontsize=10)
+    f1.text(0.45, 1.2, r'$p_{\rm ss}(\theta_1|\theta_{\rm o})$', fontsize=10)
     f1.text(0.05, 0.9, r'$\rm a)$', fontsize=10)
     f1.text(0.35, 0.9, r'$\rm b)$', fontsize=10)
     f1.text(0.62, 0.9, r'$\rm c)$', fontsize=10)
@@ -1185,7 +1188,7 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
     lines = ['dashed', 'solid']
 
     output_file_name = (target_dir + "results/" +
-                        "Entropy_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + "_sqrt_.pdf")
+                        "Entropy_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
     plt.figure()
     f, ax = plt.subplots(1, 1, figsize=(5, 4))
 
@@ -1252,11 +1255,11 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
                 print(input_file_name.format(E0, Ecouple, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift))
 
         # plot entropy production
-        ax.plot(Ecouple_array_tot, 0.707*integrate_entropy_sum, marker='o', color='C8', linestyle=lines[i])
-        ax.plot(Ecouple_array_tot, 0.707*integrate_entropy_diff, marker='v', color='C9', linestyle=lines[i])
+        ax.plot(Ecouple_array_tot, integrate_entropy_sum, marker='o', color='C8', linestyle=lines[i])
+        ax.plot(Ecouple_array_tot, integrate_entropy_diff, marker='v', color='C9', linestyle=lines[i])
 
         ax.set_xlim((2, None))
-        ax.set_ylim((7, 1.5*10**3))
+        ax.set_ylim((10, 6*10**2))
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.set_xscale('log')
@@ -1266,8 +1269,8 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
         ax.tick_params(axis='both', labelsize=14)
         ax.yaxis.offsetText.set_fontsize(14)
 
-    f.text(0.15, 0.25, r'$\dot{\Sigma}^{\rm \bar{X}}$', fontsize=14, color='C8')
-    f.text(0.35, 0.75, r'$\dot{\Sigma}^{\rm \Delta X}$', fontsize=14, color='C9')
+    f.text(0.15, 0.35, r'$\dot{\Sigma}_{\rm \bar{X}}$', fontsize=14, color='C8')
+    f.text(0.35, 0.75, r'$\dot{\Sigma}_{\rm \Delta X}$', fontsize=14, color='C9')
     f.legend(handles=[Line2D([0], [0], color='black', linestyle='dashed', lw=2, label=r'$0$'),
                       Line2D([0], [0], color='black', linestyle='solid', lw=2, label=r'$2$')],
              loc=[0.75, 0.7], frameon=False, fontsize=14, ncol=1, title=r'$\beta E^{\ddagger}$', title_fontsize=14)
@@ -1293,7 +1296,7 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
     output_file_name = (
             target_dir + "results/" + "Super_grid_" + "E0_{0}_E1_{1}_n0_{2}_n1_{3}_phi_{4}" + "_log_.pdf")
 
-    f, axarr = plt.subplots(3, 3, sharex='all', sharey='row', figsize=(8, 6.5))
+    f, axarr = plt.subplots(3, 3, sharex='all', figsize=(8, 6.5))
 
     # Barrier data
     for k, ratio in enumerate(psi_ratio):
@@ -1321,7 +1324,7 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
             idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y[:, i].argmin()])).argmin()
 
             for j in range(3):
-                axarr[j, i].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10, 10 ** 3,
+                axarr[j, i].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -30, 10 ** 3,
                                          facecolor=colorlst[k], alpha=0.4)
 
             axarr[2, i].axhline(0, color='black')
@@ -1349,14 +1352,21 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
             axarr[1, i].set_ylim((0.9, 300))
             axarr[2, i].set_yscale('linear')
             # axarr[2, i].set_ylim((10**(-2), 10**2))
-            axarr[2, i].set_ylim((-5, 2))
             axarr[2, i].spines['bottom'].set_visible(False)
 
             axarr[0, i].set_title(r'$%.0f$' % psi1_array[i], fontsize=18)
 
+    axarr[2, 0].set_ylim((-0.5, 0.5))
+    axarr[2, 1].set_ylim((-5, 2))
+    axarr[2, 2].set_ylim((-22, 2))
+    axarr[0, 1].set_yticklabels([])
+    axarr[0, 2].set_yticklabels([])
+    axarr[1, 1].set_yticklabels([])
+    axarr[1, 2].set_yticklabels([])
+
     axarr[0, 0].set_ylabel(r'$-\beta \mathcal{P}_{\rm Y} \ \rm (s^{-1})$', fontsize=14)
     axarr[1, 0].set_ylabel(r'$\beta \mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X} \ \rm (s^{-1})$', fontsize=14)
-    axarr[2, 0].set_ylabel(r'$\dot{S}^{\rm X} - \dot{S}^{\rm Y} \ \rm (s^{-1})$', fontsize=14)
+    axarr[2, 0].set_ylabel(r'$\dot{\Sigma}_{\rm X} - \dot{\Sigma}_{\rm Y} \ \rm (s^{-1})$', fontsize=14)
     # axarr[3, 0].set_ylabel(r'$\dot{I}_{\rm Y} \ \rm (s^{-1})$', fontsize=14)
 
     # f.legend(handles=[Line2D([0], [0], color=colorlst[0], linestyle='solid', lw=2, label=labellst[0], marker='o'),
@@ -1367,7 +1377,7 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
 
     # f.subplots_adjust(bottom=0.12, left=0.12, right=0.9, top=0.88, wspace=0.25, hspace=0.3)
 
-    axarr[2, 0].legend(title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', ncol=1, frameon=False, fontsize=12, title_fontsize=12,
+    axarr[0, 2].legend(title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', ncol=1, frameon=False, fontsize=12, title_fontsize=12,
                        loc=[0.6, 0.03])
 
     f.text(0.5, 0.95, r'$\beta \mu_{\rm X}\, (\rm rad^{-1})$', ha='center', fontsize=18)
@@ -1531,8 +1541,8 @@ def plot_power_bound_EPR(target_dir):
     f.text(0.32, 0.85, r'$\mathcal{P}_{\rm X}$', fontsize=14, color='tab:blue')
     f.text(0.14, 0.65, r'$\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X}$', fontsize=14, color='black')
     f.text(0.44, 0.55, r'$-\mathcal{P}_{\rm Y}$', fontsize=14, color='tab:purple')
-    f.text(0.35, 0.4, r'$\dot{\Sigma}^{\rm X}$', fontsize=14, color='tab:orange')
-    f.text(0.2, 0.25, r'$\dot{\Sigma}^{\rm Y}$', fontsize=14, color='tab:red')
+    f.text(0.35, 0.4, r'$\dot{\Sigma}_{\rm X}$', fontsize=14, color='tab:orange')
+    f.text(0.2, 0.25, r'$\dot{\Sigma}_{\rm Y}$', fontsize=14, color='tab:red')
     f.text(0.05, 0.87, r'$\rm a)$', fontsize=14)
     f.text(0.05, 0.45, r'$\rm b)$', fontsize=14)
 
@@ -1552,9 +1562,9 @@ if __name__ == "__main__":
     # plot_nn_learning_rate_Ecouple_inset(target_dir)
     # plot_power_entropy_correlation(target_dir)
     # plot_2D_prob_triple(target_dir)
-    plot_lr_prob_slice(target_dir)
+    # plot_lr_prob_slice(target_dir)
     # plot_2D_prob_rot(target_dir)
-    # plot_EPR_cm_diff_Ecouple(target_dir)
+    plot_EPR_cm_diff_Ecouple(target_dir)
     # plot_super_grid_peak(target_dir)
     # plot_power_ratio_Ecouple(target_dir)
     # plot_power_bound_EPR(target_dir)
