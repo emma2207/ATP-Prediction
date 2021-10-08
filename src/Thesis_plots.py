@@ -439,13 +439,13 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
 
     # power plot
     axarr[0].axhline(0, color='black', linewidth=1)  # x-axis
-    # maxpower = 2 * pi * 0.000085247 * timescale  # max power for E0=E1=2
+    maxpower = 2 * pi * 0.000085247 * timescale  # max power for E0=E1=2
     # maxpower = 30.  # maxpower for E0=E1=0
-    # axarr[0].axhline(maxpower, linestyle=':', color='black', linewidth=2, label=r'$\rm semi \mbox{-} analytical$')
+    axarr[0].axhline(maxpower, linestyle=':', color=clr[0], linewidth=2)#, label=r'$\rm semi \mbox{-} analytical$')
 
     # efficiency plot
     axarr[1].axhline(0, color='black', linewidth=1)  # x axis
-    # axarr[1].axhline(1, linestyle=':', color=clr, linewidth=2) #max efficiency
+    axarr[1].axhline(1, linestyle=':', color=clr[0], linewidth=2) #max efficiency
 
     # zero-barrier results
     input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/" +
@@ -490,10 +490,10 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
         if E0 > 0:
             idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y_array.argmin()])).argmin()
             print(Ecouple_array_tot[idx - 1], eff_array[idx - 1]/-0.5, Ecouple_array_tot[idx + 1], eff_array[idx + 1]/-0.5)
-            axarr[0].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 2, 10 ** 2,
-                                  facecolor=clr[j], alpha=0.4)
-            axarr[1].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 2, 10 ** 2,
-                                  facecolor=clr[j], alpha=0.4)
+            # axarr[0].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 2, 10 ** 2,
+            #                       facecolor=clr[j], alpha=0.4)
+            # axarr[1].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 2, 10 ** 2,
+            #                       facecolor=clr[j], alpha=0.4)
             axarr[0].plot(Ecouple_array_tot, -power_y_array, '-', color=clr[j],
                           markersize=8)
             axarr[1].plot(Ecouple_array_tot, eff_array / (psi_2 / psi_1), '-', markersize=8, color=clr[j])
@@ -502,7 +502,7 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
                       markersize=8)
         axarr[1].plot(Ecouple_array_tot, eff_array / (psi_2 / psi_1), 'o', markersize=8, color=clr[j])
 
-    axarr[0].axvline(11.7, linestyle='--', color='black', linewidth=4)
+    # axarr[0].axvline(11.7, linestyle='--', color='black', linewidth=4)
 
     axarr[0].yaxis.offsetText.set_fontsize(14)
     axarr[0].tick_params(axis='y', labelsize=14)
@@ -2919,7 +2919,7 @@ if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # heat_work_info(target_dir)
     # plot_power_efficiency_Ecouple_hor(target_dir)
-    plot_power_efficiency_Ecouple_ver(target_dir)
+    # plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
     # plot_energy_flow(target_dir)
     # plot_power_Ecouple_grid(target_dir)
@@ -2932,7 +2932,7 @@ if __name__ == "__main__":
     # plot_energy_flow_zoom(target_dir)
     # plot_2D_prob_single(target_dir)
     # plot_2D_cm_rel_prob(target_dir)
-    # plot_entropy_production_Ecouple(target_dir)
+    plot_entropy_production_Ecouple(target_dir)
     # plot_power_entropy_correlation(target_dir)
     # plot_power_bound_Ecouple(target_dir)
     # plot_power_infoflow(target_dir)

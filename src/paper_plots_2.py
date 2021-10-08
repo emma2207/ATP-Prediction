@@ -401,8 +401,8 @@ def plot_energy_flow(target_dir):
 
 def plot_entropy_production_Ecouple(target_dir):
     phase_shift = 0.0
-    barrier_height = [0.0, 2.0]
-    lines = ['dashed', 'solid']
+    barrier_height = [2.0]
+    lines = ['solid']
     output_file_name = (target_dir + "results/" +
                         "Entropy_E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phase_{6}" + ".pdf")
     plt.figure()
@@ -435,11 +435,11 @@ def plot_entropy_production_Ecouple(target_dir):
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
         # plot entropy production
-        ax.plot(Ecouple_array_tot, -heat_x + learning_rate, linestyle=lines[i], marker='o', color='tab:orange')
+        ax.plot(Ecouple_array_tot, -heat_x + learning_rate, linestyle=lines[i], marker='o', color='tab:green')
         ax.plot(Ecouple_array_tot, -heat_y - learning_rate, linestyle=lines[i], marker='o', color='tab:red')
 
     ax.set_xlim((2, None))
-    ax.set_ylim((3, 3*10**2))
+    ax.set_ylim((3, 2.5*10**2))
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.set_xscale('log')
@@ -449,11 +449,11 @@ def plot_entropy_production_Ecouple(target_dir):
     ax.tick_params(axis='both', labelsize=12)
     ax.yaxis.offsetText.set_fontsize(12)
 
-    f.legend(handles=[Line2D([0], [0], color='black', linestyle='dashed', lw=2, label=r'$0$'),
-                      Line2D([0], [0], color='black', linestyle='solid', lw=2, label=r'$2$')],
-             loc=[0.75, 0.7], frameon=False, fontsize=14, ncol=1, title=r'$\beta E^{\ddagger}$', title_fontsize=14)
-    f.text(0.35, 0.75, r'$\dot{\Sigma}^{\rm X}$', fontsize=14, color='tab:orange')
-    f.text(0.2, 0.45, r'$\dot{\Sigma}^{\rm Y}$', fontsize=14, color='tab:red')
+    # f.legend(handles=[Line2D([0], [0], color='black', linestyle='dashed', lw=2, label=r'$0$'),
+    #                   Line2D([0], [0], color='black', linestyle='solid', lw=2, label=r'$2$')],
+    #          loc=[0.75, 0.7], frameon=False, fontsize=14, ncol=1, title=r'$\beta E^{\ddagger}$', title_fontsize=14)
+    f.text(0.35, 0.75, r'$\dot{\Sigma}^{\rm o}$', fontsize=14, color='tab:green')
+    f.text(0.2, 0.45, r'$\dot{\Sigma}^{\rm 1}$', fontsize=14, color='tab:red')
 
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift), bbox_inches='tight')
 
@@ -554,7 +554,7 @@ def plot_nn_learning_rate_Ecouple(input_dir):  # plot power and efficiency as a 
     axarr.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     axarr.yaxis.offsetText.set_fontsize(12)
     axarr.tick_params(axis='both', labelsize=12)
-    axarr.set_ylabel(r'$-\dot{I}_{\rm X} \, (\rm s^{-1})$', fontsize=14)
+    axarr.set_ylabel(r'$-\dot{I}_{\rm o} \, (\rm s^{-1})$', fontsize=14)
     axarr.spines['right'].set_visible(False)
     axarr.spines['top'].set_visible(False)
     axarr.set_xscale('log')
@@ -1558,13 +1558,13 @@ if __name__ == "__main__":
     # plot_energy_flow(target_dir)
     # plot_entropy_production_Ecouple(target_dir)
     # plot_power_bound_Ecouple(target_dir)
-    # plot_nn_learning_rate_Ecouple(target_dir)
+    plot_nn_learning_rate_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple_inset(target_dir)
     # plot_power_entropy_correlation(target_dir)
     # plot_2D_prob_triple(target_dir)
     # plot_lr_prob_slice(target_dir)
     # plot_2D_prob_rot(target_dir)
-    plot_EPR_cm_diff_Ecouple(target_dir)
+    # plot_EPR_cm_diff_Ecouple(target_dir)
     # plot_super_grid_peak(target_dir)
     # plot_power_ratio_Ecouple(target_dir)
     # plot_power_bound_EPR(target_dir)
