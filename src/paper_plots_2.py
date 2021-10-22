@@ -16,8 +16,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 4.0  # chemical driving force on Fo
-psi_2 = -2.0  # chemical driving force on F1
+psi_1 = 8.0  # chemical driving force on Fo
+psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -291,6 +291,7 @@ def heat_work_info(target_dir):
                             force_FoF1[i, j] = -0.5 * Ecouple * sin(positions[i] - positions[j])
 
                     energy_o_1[ii] = trapz(trapz(flux_array[0, ...] * force_FoF1)) * timescale
+                    # needs a minus sign to make it \mathcal{P}_{\rm X \to Y}
 
                     # calculate learning rate
                     dflux_array = empty((2, N, N))
@@ -304,6 +305,7 @@ def heat_work_info(target_dir):
                     learning_rate[ii] = -trapz(trapz(
                         dflux_array[1, ...] * log(prob_ss_array)
                     )) * timescale
+                    # needs a minus sign to make it \dot{I}_{\rm X}
 
                 with open(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple), "w") as \
                         ofile:
@@ -1553,12 +1555,71 @@ def plot_power_bound_EPR(target_dir):
     f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift), bbox_inches='tight')
 
 
+def plot_alt_efficiencies_Ecouple(target_dir):
+    phase_shift = 0.0
+    barrier_height = array([2.0])
+    linestyles = ['solid']
+    input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
+                       "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
+    output_file_name = (target_dir + "results/" + "Information_engine-ness_Ecouple_" +
+                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phi_{6}" + "_.pdf")
+
+    plt.figure()
+    f, ax = plt.subplots(1, 1, figsize=(5, 4))
+    for j, E0 in enumerate(barrier_height):
+        E1 = E0
+        if E0 == 0.0:
+            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+        else:
+            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak)))
+
+        power_x = empty(Ecouple_array_total.size)
+        power_y = empty(Ecouple_array_total.size)
+        energy_xy = empty(Ecouple_array_total.size)
+        learning_rate = empty(Ecouple_array_total.size)
+
+        for i, Ecouple in enumerate(Ecouple_array_total):
+            try:
+                data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+                power_x[i] = data_array[1]
+                power_y[i] = data_array[2]
+                energy_xy[i] = data_array[5]
+                learning_rate[i] = data_array[6]
+            except OSError:
+                print('Missing file')
+                print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
+
+        # ax.plot(Ecouple_array_total, -(energy_xy + learning_rate)/power_x, linestyle=linestyles[j], marker='o',
+        #            color='tab:blue', label=r'$\eta_{\rm X}$')
+        # ax.plot(Ecouple_array_total, power_y/(energy_xy + learning_rate), linestyle=linestyles[j], marker='o',
+        #            color='tab:orange', label=r'$\eta_{\rm Y}$')
+        ax.plot(Ecouple_array_total, -learning_rate / (energy_xy - learning_rate), linestyle=linestyles[j], marker='o',
+                   color='tab:blue')
+
+    # ax.set_ylim((7, 3 * 10 ** 2))
+    # ax.set_xlim((2, None))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    # ax.set_ylabel(r'$\eta$', fontsize=14)
+    ax.set_ylabel(r'$\frac{\dot{I}_{\rm X}}{\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X}}$', fontsize=14)
+    ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
+    ax.tick_params(axis='both', labelsize=12)
+    # ax.legend(frameon=False)
+
+    # f.text(0.32, 0.85, r'$\mathcal{P}_{\rm X}$', fontsize=14, color='tab:blue')
+    # f.text(0.14, 0.65, r'$\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X}$', fontsize=14, color='black')
+
+    f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phase_shift), bbox_inches='tight')
+
+
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # plot_energy_flow(target_dir)
     # plot_entropy_production_Ecouple(target_dir)
     # plot_power_bound_Ecouple(target_dir)
-    plot_nn_learning_rate_Ecouple(target_dir)
+    # plot_nn_learning_rate_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple_inset(target_dir)
     # plot_power_entropy_correlation(target_dir)
     # plot_2D_prob_triple(target_dir)
@@ -1568,3 +1629,4 @@ if __name__ == "__main__":
     # plot_super_grid_peak(target_dir)
     # plot_power_ratio_Ecouple(target_dir)
     # plot_power_bound_EPR(target_dir)
+    plot_alt_efficiencies_Ecouple(target_dir)
