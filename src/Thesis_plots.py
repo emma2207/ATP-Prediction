@@ -670,12 +670,12 @@ def plot_energy_flow(target_dir):
     # Energy chapter. energy flows vs coupling strength
     # input power, output power, heat flows X and Y, power from X to Y
     phase_array = array([0.0])
-    psi1_array = array([8.0])
-    psi2_array = array([-4.0])
+    psi1_array = array([4.0])
+    psi2_array = array([-2.0])
     barrier_height = array([2.0])
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
-    output_file_name = (target_dir + "results/" + "Energy_flow_Ecouple_" +
+    output_file_name = (target_dir + "results/" + "Power_bound_Ecouple_" +
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phi_{6}" + "_.pdf")
 
     for psi_1 in psi1_array:
@@ -688,7 +688,8 @@ def plot_energy_flow(target_dir):
                     if E0 == 0.0:
                         Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
                     else:
-                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad,
+                                                                Ecouple_array_peak)))
 
                     power_x = empty(Ecouple_array_total.size)
                     power_y = empty(Ecouple_array_total.size)
@@ -712,25 +713,27 @@ def plot_energy_flow(target_dir):
 
                     ax.axhline(0, color='black')
 
-                    ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\mathcal{P}_{\rm H^+}$', color='tab:blue')
-                    ax.plot(Ecouple_array_total, power_y, '-o', label=r'$\mathcal{P}_{\rm ATP}$', color='tab:orange')
-                    ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
-                    ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
-                    ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\mathcal{P}_{\rm o \to 1}$', color='tab:purple')
+                    ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\mathcal{P}_{\rm H^+}$', color='tab:green')
+                    # ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
+                    # ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
+                    # ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\mathcal{P}_{\rm o \to 1}$', color='tab:purple')
+                    ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
+                            label=r'$\mathcal{P}_{\rm o \to 1} + \beta^{-1}\dot{I}_{\rm o}$', color='tab:grey')
+                    ax.plot(Ecouple_array_total, -power_y, '-o', label=r'$\mathcal{P}_{\rm ATP}$', color='tab:orange')
 
-                ax.set_ylim((-120, 120))
+                ax.set_ylim((8, None))
                 ax.set_xlim((2, None))
 
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
                 ax.spines['bottom'].set_visible(False)
                 ax.set_xscale('log')
-                # ax.set_yscale('log')
+                ax.set_yscale('log')
                 ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
-                ax.set_ylabel(r'$\textrm{Energy flow} \ (k_{\rm B}T \cdot \rm s^{-1})$', fontsize=16)
+                ax.set_ylabel(r'$\textrm{Energy flow} \ (k_{\rm B}T / \rm s)$', fontsize=16)
                 ax.tick_params(axis='both', labelsize=14)
                 ax.yaxis.offsetText.set_fontsize(14)
-                # ax.legend(fontsize=14, frameon=False, ncol=1, loc='best')
+                ax.legend(fontsize=16, frameon=False, ncol=1, loc='best')
 
                 f.tight_layout()
                 f.savefig(output_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, phi))
@@ -851,7 +854,6 @@ def plot_power_Ecouple_grid(target_dir):
             # else:
             axarr[i, j].tick_params(axis='both', labelsize=18)
 
-    f.tight_layout()
     f.subplots_adjust(bottom=0.12, left=0.12, right=0.9, top=0.88, wspace=0.1, hspace=0.1)
     f.text(0.5, 0.01, r'$\beta E_{\rm couple}$', ha='center', fontsize=20)
     f.text(0.01, 0.5, r'$\beta \mathcal{P}_{\rm ATP}\ (\rm s^{-1})$', va='center', rotation='vertical',
@@ -859,7 +861,7 @@ def plot_power_Ecouple_grid(target_dir):
     f.text(0.5, 0.95, r'$-\mu_{\rm H^+} / \mu_{\rm ATP}$', ha='center', rotation=0, fontsize=20)
     f.text(0.95, 0.5, r'$\beta \mu_{\rm H^+}\ (\rm rad^{-1})$', va='center', rotation=270, fontsize=20)
 
-    f.savefig(output_file_name.format(E0, E1, num_minima1, num_minima2))
+    f.savefig(output_file_name.format(E0, E1, num_minima1, num_minima2), bbox_inches='tight')
 
 
 def plot_efficiency_Ecouple_grid(target_dir):
@@ -2921,7 +2923,7 @@ if __name__ == "__main__":
     # plot_power_efficiency_Ecouple_hor(target_dir)
     # plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
-    # plot_energy_flow(target_dir)
+    plot_energy_flow(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_efficiency_Ecouple_grid(target_dir)
     # plot_nn_power_efficiency_Ecouple(target_dir)
@@ -2932,7 +2934,7 @@ if __name__ == "__main__":
     # plot_energy_flow_zoom(target_dir)
     # plot_2D_prob_single(target_dir)
     # plot_2D_cm_rel_prob(target_dir)
-    plot_entropy_production_Ecouple(target_dir)
+    # plot_entropy_production_Ecouple(target_dir)
     # plot_power_entropy_correlation(target_dir)
     # plot_power_bound_Ecouple(target_dir)
     # plot_power_infoflow(target_dir)
