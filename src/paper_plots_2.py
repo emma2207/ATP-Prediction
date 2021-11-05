@@ -16,8 +16,8 @@ timescale = 1.5 * 10**4  # conversion factor between simulation and experimental
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -337,7 +337,7 @@ def plot_energy_flow(target_dir):
     for j, E0 in enumerate(barrier_height):
         E1 = E0
         if E0 == 0.0:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
         else:
             Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
 
@@ -648,15 +648,11 @@ def plot_nn_learning_rate_Ecouple_inset(input_dir):  # plot power and efficiency
 def plot_power_entropy_correlation(target_dir):
     psi1_array = array([2.0, 4.0, 8.0])
     psi_ratio = array([8, 4, 2])
-    plts=2
     entropy_data = empty((psi1_array.size, psi_ratio.size, 3))
     power_data = empty((psi1_array.size, psi_ratio.size, 3))
-    in_power_data = empty((psi1_array.size, psi_ratio.size, 3))
-    power_xy_data = empty((psi1_array.size, psi_ratio.size, 3))
-    infoflow_data = empty((psi1_array.size, psi_ratio.size, 3))
     bound_data = empty((psi1_array.size, psi_ratio.size, 3))
     markerlst = ['s', 'D', 'o']
-    sizes = [100, 100, 100]
+    sizes = [100, 300, 100]
     colorlst = ['darkblue', 'purple', 'darkred']
 
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
@@ -775,15 +771,15 @@ def plot_power_entropy_correlation(target_dir):
 
     for i in range(3):
         for j in range(3):
-            markers, caps, bars = ax[1].errorbar(power_data[i, j, 0], entropy_data[i, j, 0], yerr=entropy_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
-            ax[1].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[i], linestyle='None',
-                           color=colorlst[j], s=sizes[i], alpha=0.5)
+            markers, caps, bars = ax[1].errorbar(power_data[i, j, 0], bound_data[i, j, 0], yerr=bound_data[i, j, 1:3].T.reshape((2, 1)),
+                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[i], marker=None)
+            ax[1].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[j], linestyle='None',
+                           color=colorlst[i], s=sizes[j], alpha=0.5)
             [bar.set_alpha(0.5) for bar in bars]
-            markers, caps, bars = ax[0].errorbar(power_data[i, j, 0], bound_data[i, j, 0], yerr=bound_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=bound_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
-            ax[0].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[i], linestyle='None',
-                          color=colorlst[j], s=sizes[i], alpha=0.5)
+            markers, caps, bars = ax[0].errorbar(power_data[i, j, 0], entropy_data[i, j, 0], yerr=entropy_data[i, j, 1:3].T.reshape((2, 1)),
+                           xerr=entropy_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[i], marker=None)
+            ax[0].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[j], linestyle='None',
+                          color=colorlst[i], s=sizes[j], alpha=0.5)
             [bar.set_alpha(0.5) for bar in bars]
             # markers, caps, bars = ax[2].errorbar(power_data[i, j, 0], infoflow_data[i, j, 0], yerr=infoflow_data[i, j, 1:3].T.reshape((2, 1)),
             #                xerr=power_data[i, j, 1:3].T.reshape((2, 1)), marker=markerlst[j], fmt='', linestyle='None',
@@ -804,23 +800,23 @@ def plot_power_entropy_correlation(target_dir):
     ax[-1].set_xticks([5, 10, 15, 20, 25])
     ax[-1].set_xticklabels(['$5$', '$10$', '$15$', '$20$', '$25$'])
     ax[-1].set_xlabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \mathcal{P}_{\rm Y}$', fontsize=14)
-    ax[0].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmin}} \ |\dot{\Sigma}_{\rm Y} - \dot{\Sigma}_{\rm X}|$', fontsize=14)
-    ax[1].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ (\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X})$', fontsize=14)
+    ax[1].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmin}} \ |\dot{\Sigma}_{\rm Y} - \dot{\Sigma}_{\rm X}|$', fontsize=14)
+    ax[0].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ (\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X})$', fontsize=14)
     # ax[2].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \dot{I}_{\rm Y}$', fontsize=14)
 
     f.legend(handles=[Line2D([0], [0], color=colorlst[0], lw=2, label=r'$2$', alpha=0.5),
                       Line2D([0], [0], color=colorlst[1], lw=2, label=r'$4$', alpha=0.5),
                       Line2D([0], [0], color=colorlst[2], lw=2, label=r'$8$', alpha=0.5)],
-             loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
+             loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$\beta \mu_{\rm X}$', title_fontsize=14)
 
     f.legend(handles=[Line2D([0], [0], marker=markerlst[0], color='black', lw=0, label=r'$2$', alpha=0.5),
-                      Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=0.5),
+                      Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=0.5, markersize=14),
                       Line2D([0], [0], marker=markerlst[2], color='black', lw=0, label=r'$8$', alpha=0.5)],
-             loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$\beta \mu_{\rm X}$', title_fontsize=14)
+             loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
 
     f.subplots_adjust(hspace=0.1)
     f.text(-0.03, 0.88, r'$\rm a)$', fontsize=14)
-    f.text(-0.03, 0.5, r'$\rm b)$', fontsize=14)
+    f.text(-0.03, 0.48, r'$\rm b)$', fontsize=14)
     # f.text(-0.03, 0.34, r'$\rm c)$', fontsize=14)
     f.savefig(output_file_name, bbox_inches='tight')
 
@@ -1457,7 +1453,7 @@ def plot_power_bound_EPR(target_dir):
     for j, E0 in enumerate(barrier_height):
         E1 = E0
         if E0 == 0.0:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
         else:
             Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double2, Ecouple_array_peak,
                                                     Ecouple_array_quad)))
@@ -1505,7 +1501,7 @@ def plot_power_bound_EPR(target_dir):
     for i, E0 in enumerate(barrier_height):
         E1 = E0
         if E0 == 0.0:
-            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
         else:
             Ecouple_array_tot = sort(
                 concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
@@ -1628,5 +1624,5 @@ if __name__ == "__main__":
     # plot_EPR_cm_diff_Ecouple(target_dir)
     # plot_super_grid_peak(target_dir)
     # plot_power_ratio_Ecouple(target_dir)
-    # plot_power_bound_EPR(target_dir)
-    plot_alt_efficiencies_Ecouple(target_dir)
+    plot_power_bound_EPR(target_dir)
+    # plot_alt_efficiencies_Ecouple(target_dir)
