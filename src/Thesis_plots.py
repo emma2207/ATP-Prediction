@@ -218,7 +218,8 @@ def calc_derivative(flux_array, dflux_array, N, dx, k):
 
 def heat_work_info(target_dir):
     # data processing of raw simulation data into averaged quantities
-    Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
+    # Ecouple_array_tot = sort(concatenate((Ecouple_array_peak)))
+    Ecouple_array_tot = Ecouple_array_peak
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
     phase_array = array([0.0])
@@ -2919,11 +2920,11 @@ def plot_super_grid_nn(target_dir):  # grid of plots of output power, entropy ra
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    # heat_work_info(target_dir)
+    heat_work_info(target_dir)
     # plot_power_efficiency_Ecouple_hor(target_dir)
     # plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
-    plot_energy_flow(target_dir)
+    # plot_energy_flow(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_efficiency_Ecouple_grid(target_dir)
     # plot_nn_power_efficiency_Ecouple(target_dir)

@@ -337,7 +337,7 @@ def plot_energy_flow(target_dir):
     for j, E0 in enumerate(barrier_height):
         E1 = E0
         if E0 == 0.0:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
+            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad, Ecouple_array_peak)))
         else:
             Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
 
@@ -473,11 +473,8 @@ def plot_power_bound_Ecouple(target_dir):
     f, ax = plt.subplots(1, 1, figsize=(5, 4))
     for j, E0 in enumerate(barrier_height):
         E1 = E0
-        if E0 == 0.0:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-        else:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double2, Ecouple_array_peak,
-                                                    Ecouple_array_quad)))
+        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double2, Ecouple_array_peak,
+                                                Ecouple_array_quad)))
 
         power_x = empty(Ecouple_array_total.size)
         power_y = empty(Ecouple_array_total.size)
@@ -651,7 +648,7 @@ def plot_power_entropy_correlation(target_dir):
     entropy_data = empty((psi1_array.size, psi_ratio.size, 3))
     power_data = empty((psi1_array.size, psi_ratio.size, 3))
     bound_data = empty((psi1_array.size, psi_ratio.size, 3))
-    markerlst = ['s', 'D', 'o']
+    markerlst = ['o', 's', 'D']
     sizes = [100, 300, 100]
     colorlst = ['darkblue', 'purple', 'darkred']
 
@@ -772,14 +769,14 @@ def plot_power_entropy_correlation(target_dir):
     for i in range(3):
         for j in range(3):
             markers, caps, bars = ax[1].errorbar(power_data[i, j, 0], bound_data[i, j, 0], yerr=bound_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[i], marker=None)
-            ax[1].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[j], linestyle='None',
-                           color=colorlst[i], s=sizes[j], alpha=0.5)
+                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
+            ax[1].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[i], linestyle='None',
+                           color=colorlst[j], s=sizes[j], alpha=0.5)
             [bar.set_alpha(0.5) for bar in bars]
             markers, caps, bars = ax[0].errorbar(power_data[i, j, 0], entropy_data[i, j, 0], yerr=entropy_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=entropy_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[i], marker=None)
-            ax[0].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[j], linestyle='None',
-                          color=colorlst[i], s=sizes[j], alpha=0.5)
+                           xerr=entropy_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
+            ax[0].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[i], linestyle='None',
+                          color=colorlst[j], s=sizes[j], alpha=0.5)
             [bar.set_alpha(0.5) for bar in bars]
             # markers, caps, bars = ax[2].errorbar(power_data[i, j, 0], infoflow_data[i, j, 0], yerr=infoflow_data[i, j, 1:3].T.reshape((2, 1)),
             #                xerr=power_data[i, j, 1:3].T.reshape((2, 1)), marker=markerlst[j], fmt='', linestyle='None',
@@ -807,12 +804,12 @@ def plot_power_entropy_correlation(target_dir):
     f.legend(handles=[Line2D([0], [0], color=colorlst[0], lw=2, label=r'$2$', alpha=0.5),
                       Line2D([0], [0], color=colorlst[1], lw=2, label=r'$4$', alpha=0.5),
                       Line2D([0], [0], color=colorlst[2], lw=2, label=r'$8$', alpha=0.5)],
-             loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$\beta \mu_{\rm X}$', title_fontsize=14)
+             loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
 
     f.legend(handles=[Line2D([0], [0], marker=markerlst[0], color='black', lw=0, label=r'$2$', alpha=0.5),
-                      Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=0.5, markersize=14),
+                      Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=0.5),
                       Line2D([0], [0], marker=markerlst[2], color='black', lw=0, label=r'$8$', alpha=0.5)],
-             loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
+             loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$\beta \mu_{\rm X}$', title_fontsize=14)
 
     f.subplots_adjust(hspace=0.1)
     f.text(-0.03, 0.88, r'$\rm a)$', fontsize=14)
@@ -1453,17 +1450,18 @@ def plot_power_bound_EPR(target_dir):
     for j, E0 in enumerate(barrier_height):
         E1 = E0
         if E0 == 0.0:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
+            Ecouple_array_tot = sort(
+                concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad, Ecouple_array_peak)))
         else:
-            Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double2, Ecouple_array_peak,
-                                                    Ecouple_array_quad)))
+            Ecouple_array_tot = sort(
+                concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
 
-        power_x = empty(Ecouple_array_total.size)
-        power_y = empty(Ecouple_array_total.size)
-        energy_xy = empty(Ecouple_array_total.size)
-        learning_rate = empty(Ecouple_array_total.size)
+        power_x = empty(Ecouple_array_tot.size)
+        power_y = empty(Ecouple_array_tot.size)
+        energy_xy = empty(Ecouple_array_tot.size)
+        learning_rate = empty(Ecouple_array_tot.size)
 
-        for i, Ecouple in enumerate(Ecouple_array_total):
+        for i, Ecouple in enumerate(Ecouple_array_tot):
             try:
                 data_array = loadtxt(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
                 power_x[i] = data_array[1]
@@ -1471,21 +1469,21 @@ def plot_power_bound_EPR(target_dir):
                 energy_xy[i] = data_array[5]
                 learning_rate[i] = data_array[6]
             except OSError:
-                print('Missing file')
+                print('Missing file 1')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
         ax[0].axhline(0, color='black')
         # ax.axhline(1, color='grey')
 
         if j == 0:
-            ax[0].plot(Ecouple_array_total, power_x, linestyle=lines[j], marker='o', color='tab:blue')
-            ax[0].plot(Ecouple_array_total, -power_y, linestyle=lines[j], marker='o', color='tab:purple')
-            ax[0].plot(Ecouple_array_total, -energy_xy - learning_rate, linestyle=lines[j], marker='o',
+            ax[0].plot(Ecouple_array_tot, power_x, linestyle=lines[j], marker='o', color='tab:blue')
+            ax[0].plot(Ecouple_array_tot, -power_y, linestyle=lines[j], marker='o', color='tab:purple')
+            ax[0].plot(Ecouple_array_tot, -energy_xy - learning_rate, linestyle=lines[j], marker='o',
                     color='black')
         else:
-            ax[0].plot(Ecouple_array_total, power_x, linestyle=lines[j], marker='o', color='tab:blue')
-            ax[0].plot(Ecouple_array_total, -power_y, linestyle=lines[j], marker='o', color='tab:purple')
-            ax[0].plot(Ecouple_array_total, -energy_xy - learning_rate, linestyle=lines[j], marker='o', color='black')
+            ax[0].plot(Ecouple_array_tot, power_x, linestyle=lines[j], marker='o', color='tab:blue')
+            ax[0].plot(Ecouple_array_tot, -power_y, linestyle=lines[j], marker='o', color='tab:purple')
+            ax[0].plot(Ecouple_array_tot, -energy_xy - learning_rate, linestyle=lines[j], marker='o', color='black')
 
     ax[0].set_ylim((7, 3 * 10 ** 2))
     ax[0].set_xlim((2, None))
@@ -1501,7 +1499,7 @@ def plot_power_bound_EPR(target_dir):
     for i, E0 in enumerate(barrier_height):
         E1 = E0
         if E0 == 0.0:
-            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
+            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad, Ecouple_array_peak)))
         else:
             Ecouple_array_tot = sort(
                 concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
@@ -1519,7 +1517,7 @@ def plot_power_bound_EPR(target_dir):
                 heat_y[ii] = data_array[4]
                 learning_rate[ii] = data_array[6]
             except OSError:
-                print('Missing file')
+                print('Missing file 2')
                 print(input_file_name.format(E0, E1, psi_1, psi_2, num_minima1, num_minima2, Ecouple))
 
         ax[1].plot(Ecouple_array_tot, -heat_x + learning_rate, linestyle=lines[i], marker='o', color='tab:orange')
@@ -1617,12 +1615,12 @@ if __name__ == "__main__":
     # plot_power_bound_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple_inset(target_dir)
-    # plot_power_entropy_correlation(target_dir)
+    plot_power_entropy_correlation(target_dir)
     # plot_2D_prob_triple(target_dir)
     # plot_lr_prob_slice(target_dir)
     # plot_2D_prob_rot(target_dir)
     # plot_EPR_cm_diff_Ecouple(target_dir)
     # plot_super_grid_peak(target_dir)
     # plot_power_ratio_Ecouple(target_dir)
-    plot_power_bound_EPR(target_dir)
+    # plot_power_bound_EPR(target_dir)
     # plot_alt_efficiencies_Ecouple(target_dir)
