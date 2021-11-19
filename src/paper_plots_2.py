@@ -28,7 +28,7 @@ Ecouple_array_zero = array([0.0, 2.0, 4.0, 8.0, 16.0, 32.0, 128.0])
 Ecouple_array_peak = array([10.0, 12.0, 14.0, 18.0, 20.0, 22.0, 24.0])
 Ecouple_array_double = array([2.83, 5.66, 11.31, 22.63, 45.25, 90.51])
 Ecouple_array_double2 = array([2.83, 5.66, 11.31, 22.62, 45.25, 90.51])
-Ecouple_array_quad = array([1.19, 1.68, 2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
+Ecouple_array_quad = array([2.38, 3.36, 4.76, 6.73, 9.51, 13.45, 19.03, 26.91, 38.05, 53.82, 76.11, 107.63])
 
 Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
 
@@ -380,19 +380,19 @@ def plot_energy_flow(target_dir):
 
     ax[0].set_ylim((None, 250))
     ax[1].set_ylim((4, 60))
-    ax[0].set_ylabel(r'$(k_{\rm B}T \cdot \rm s^{-1})$', fontsize=14)
-    ax[1].set_ylabel(r'$(k_{\rm B}T \cdot \rm s^{-1})$', fontsize=14)
+    ax[0].set_ylabel(r'$(\rm s^{-1})$', fontsize=14)
+    ax[1].set_ylabel(r'$(\rm s^{-1})$', fontsize=14)
     ax[1].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=14)
 
     f.legend(handles=[Line2D([0], [0], color='black', linestyle='dashed', lw=2, label=r'$\beta E^{\ddagger} = 0$'),
                       Line2D([0], [0], color='black', linestyle='solid', lw=2, label=r'$\beta E^{\ddagger} = 2$')],
              loc=[0.2, 0.48], frameon=False, fontsize=14, ncol=2)
 
-    f.text(0.7, 0.73, r'$\mathcal{P}_{\rm X}$', fontsize=14, color='tab:blue')
-    f.text(0.3, 0.66, r'$-\dot{Q}_{\rm X}$', fontsize=14, color='tab:orange')
-    f.text(0.6, 0.32, r'$-\mathcal{P}_{\rm Y}$', fontsize=14, color='tab:purple')
-    f.text(0.15, 0.34, r'$-\dot{Q}_{\rm Y}$', fontsize=14, color='tab:red')
-    f.text(0.78, 0.37, r'$\mathcal{P}_{\rm X \to Y}$', fontsize=14, color='tab:green')
+    f.text(0.7, 0.73, r'$\beta \mathcal{P}_{\rm X}$', fontsize=14, color='tab:blue')
+    f.text(0.3, 0.66, r'$-\beta \dot{Q}_{\rm X}$', fontsize=14, color='tab:orange')
+    f.text(0.6, 0.31, r'$-\beta \mathcal{P}_{\rm Y}$', fontsize=14, color='tab:purple')
+    f.text(0.14, 0.33, r'$-\beta \dot{Q}_{\rm Y}$', fontsize=14, color='tab:red')
+    f.text(0.75, 0.365, r'$\beta \mathcal{P}_{\rm X \to Y}$', fontsize=14, color='tab:green')
     f.text(0.0, 0.88, r'$\rm a)$', fontsize=14)
     f.text(0.0, 0.45, r'$\rm b)$', fontsize=14)
 
@@ -649,8 +649,9 @@ def plot_power_entropy_correlation(target_dir):
     power_data = empty((psi1_array.size, psi_ratio.size, 3))
     bound_data = empty((psi1_array.size, psi_ratio.size, 3))
     markerlst = ['o', 's', 'D']
-    sizes = [100, 300, 100]
-    colorlst = ['darkblue', 'purple', 'darkred']
+    sizes = [300, 100, 100]
+    barwidths = [4, 2, 2]
+    colorlst = ['darkblue', 'firebrick', 'purple']
 
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" +
                        "power_heat_info_" + "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" +
@@ -762,22 +763,24 @@ def plot_power_entropy_correlation(target_dir):
 
     plt.figure()
     f, ax = plt.subplots(2, 1, figsize=(4, 8.5))
-    ax[0].plot(range(5, 25), range(5, 25), '--', color='gray')
-    ax[1].plot(range(5, 25), range(5, 25), '--', color='gray')
+    ax[0].plot(range(5, 25), range(5, 25), '--', color='gray', zorder=0)
+    ax[1].plot(range(5, 25), range(5, 25), '--', color='gray', zorder=0)
     # ax[2].plot(range(5, 25), range(5, 25), '--', color='gray')
 
     for i in range(3):
         for j in range(3):
             markers, caps, bars = ax[1].errorbar(power_data[i, j, 0], bound_data[i, j, 0], yerr=bound_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
+                           xerr=power_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None,
+                                                 elinewidth=barwidths[j], alpha=1, zorder=1)
             ax[1].scatter(power_data[i, j, 0], bound_data[i, j, 0], marker=markerlst[i], linestyle='None',
-                           color=colorlst[j], s=sizes[j], alpha=0.5)
-            [bar.set_alpha(0.5) for bar in bars]
+                           color=colorlst[j], s=sizes[j], alpha=1)
+            # [bar.set_alpha(0.5) for bar in bars]
             markers, caps, bars = ax[0].errorbar(power_data[i, j, 0], entropy_data[i, j, 0], yerr=entropy_data[i, j, 1:3].T.reshape((2, 1)),
-                           xerr=entropy_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None)
+                           xerr=entropy_data[i, j, 1:3].T.reshape((2, 1)), fmt='', color=colorlst[j], marker=None,
+                                                 elinewidth=barwidths[j], alpha=1, zorder=1)
             ax[0].scatter(power_data[i, j, 0], entropy_data[i, j, 0], marker=markerlst[i], linestyle='None',
-                          color=colorlst[j], s=sizes[j], alpha=0.5)
-            [bar.set_alpha(0.5) for bar in bars]
+                          color=colorlst[j], s=sizes[j], alpha=1)
+            # [bar.set_alpha(0.5) for bar in bars]
             # markers, caps, bars = ax[2].errorbar(power_data[i, j, 0], infoflow_data[i, j, 0], yerr=infoflow_data[i, j, 1:3].T.reshape((2, 1)),
             #                xerr=power_data[i, j, 1:3].T.reshape((2, 1)), marker=markerlst[j], fmt='', linestyle='None',
             #                color=colorlst[i])
@@ -796,19 +799,19 @@ def plot_power_entropy_correlation(target_dir):
 
     ax[-1].set_xticks([5, 10, 15, 20, 25])
     ax[-1].set_xticklabels(['$5$', '$10$', '$15$', '$20$', '$25$'])
-    ax[-1].set_xlabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \mathcal{P}_{\rm Y}$', fontsize=14)
+    ax[-1].set_xlabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \beta \mathcal{P}_{\rm Y}$', fontsize=14)
     ax[1].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmin}} \ |\dot{\Sigma}_{\rm Y} - \dot{\Sigma}_{\rm X}|$', fontsize=14)
-    ax[0].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ (\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X})$', fontsize=14)
+    ax[0].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ (\beta \mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X})$', fontsize=14)
     # ax[2].set_ylabel(r'$\underset{\beta E_{\rm couple}}{\textrm{argmax}} \ \dot{I}_{\rm Y}$', fontsize=14)
 
-    f.legend(handles=[Line2D([0], [0], color=colorlst[0], lw=2, label=r'$2$', alpha=0.5),
-                      Line2D([0], [0], color=colorlst[1], lw=2, label=r'$4$', alpha=0.5),
-                      Line2D([0], [0], color=colorlst[2], lw=2, label=r'$8$', alpha=0.5)],
+    f.legend(handles=[Line2D([0], [0], color=colorlst[0], lw=4, label=r'$2$', alpha=1),
+                      Line2D([0], [0], color=colorlst[1], lw=2, label=r'$4$', alpha=1),
+                      Line2D([0], [0], color=colorlst[2], lw=2, label=r'$8$', alpha=1)],
              loc=[0.75, 0.58], frameon=False, fontsize=14, ncol=1, title=r'$-\mu_{\rm X}/\mu_{\rm Y}$', title_fontsize=14)
 
-    f.legend(handles=[Line2D([0], [0], marker=markerlst[0], color='black', lw=0, label=r'$2$', alpha=0.5),
-                      Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=0.5),
-                      Line2D([0], [0], marker=markerlst[2], color='black', lw=0, label=r'$8$', alpha=0.5)],
+    f.legend(handles=[Line2D([0], [0], marker=markerlst[0], color='black', lw=0, label=r'$2$', alpha=1),
+                      Line2D([0], [0], marker=markerlst[1], color='black', lw=0, label=r'$4$', alpha=1),
+                      Line2D([0], [0], marker=markerlst[2], color='black', lw=0, label=r'$8$', alpha=1)],
              loc=[0.75, 0.1], frameon=False, fontsize=14, ncol=1, title=r'$\beta \mu_{\rm X}$', title_fontsize=14)
 
     f.subplots_adjust(hspace=0.1)
@@ -1190,11 +1193,7 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
     for i, E0 in enumerate(barrier_height):
         E1 = E0
         # calculate entropy production
-        if E0 == 0.0:
-            Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double)))
-        else:
-            Ecouple_array_tot = sort(
-                concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
+        Ecouple_array_tot = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_peak, Ecouple_array_quad)))
 
         integrate_entropy_X = empty(Ecouple_array_tot.size)
         integrate_entropy_Y = empty(Ecouple_array_tot.size)
@@ -1203,9 +1202,9 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
 
         for ii, Ecouple in enumerate(Ecouple_array_tot):
             if E0 == 0.0:
-                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/201112/" +
-                                   "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
-                                   "_outfile.dat")
+                input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Zero-barriers-FP/211003/" +
+                                       "reference_E0_{0}_Ecouple_{1}_E1_{2}_psi1_{3}_psi2_{4}_n1_{5}_n2_{6}_phase_{7}" +
+                                       "_outfile.dat")
             else:
                 if Ecouple in Ecouple_array_peak:
                     input_file_name = ("/Users/Emma/Documents/Data/ATPsynthase/Full-2D-FP/200511_2kT_extra/" +
@@ -1251,7 +1250,7 @@ def plot_EPR_cm_diff_Ecouple(target_dir):
 
         # plot entropy production
         ax.plot(Ecouple_array_tot, integrate_entropy_sum, marker='o', color='C8', linestyle=lines[i])
-        ax.plot(Ecouple_array_tot, integrate_entropy_diff, marker='v', color='C9', linestyle=lines[i])
+        ax.plot(Ecouple_array_tot, integrate_entropy_diff, marker='o', color='C9', linestyle=lines[i])
 
         ax.set_xlim((2, None))
         ax.set_ylim((10, 6*10**2))
@@ -1534,9 +1533,9 @@ def plot_power_bound_EPR(target_dir):
     ax[1].tick_params(axis='both', labelsize=12)
     ax[1].yaxis.offsetText.set_fontsize(12)
 
-    f.text(0.32, 0.85, r'$\mathcal{P}_{\rm X}$', fontsize=14, color='tab:blue')
-    f.text(0.14, 0.65, r'$\mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X}$', fontsize=14, color='black')
-    f.text(0.44, 0.55, r'$-\mathcal{P}_{\rm Y}$', fontsize=14, color='tab:purple')
+    f.text(0.32, 0.85, r'$\beta \mathcal{P}_{\rm X}$', fontsize=14, color='tab:blue')
+    f.text(0.14, 0.67, r'$\beta \mathcal{P}_{\rm X \to Y} + \dot{I}_{\rm X}$', fontsize=14, color='black')
+    f.text(0.44, 0.55, r'$-\beta \mathcal{P}_{\rm Y}$', fontsize=14, color='tab:purple')
     f.text(0.35, 0.4, r'$\dot{\Sigma}_{\rm X}$', fontsize=14, color='tab:orange')
     f.text(0.2, 0.25, r'$\dot{\Sigma}_{\rm Y}$', fontsize=14, color='tab:red')
     f.text(0.05, 0.87, r'$\rm a)$', fontsize=14)
@@ -1615,11 +1614,11 @@ if __name__ == "__main__":
     # plot_power_bound_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple(target_dir)
     # plot_nn_learning_rate_Ecouple_inset(target_dir)
-    plot_power_entropy_correlation(target_dir)
+    # plot_power_entropy_correlation(target_dir)
     # plot_2D_prob_triple(target_dir)
     # plot_lr_prob_slice(target_dir)
     # plot_2D_prob_rot(target_dir)
-    # plot_EPR_cm_diff_Ecouple(target_dir)
+    plot_EPR_cm_diff_Ecouple(target_dir)
     # plot_super_grid_peak(target_dir)
     # plot_power_ratio_Ecouple(target_dir)
     # plot_power_bound_EPR(target_dir)
