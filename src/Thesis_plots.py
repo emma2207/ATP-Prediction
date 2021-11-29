@@ -12,10 +12,10 @@ dx = 2 * math.pi / N  # spacing between gridpoints
 positions = linspace(0, 2 * math.pi - dx, N)  # gridpoints
 timescale = 1.5 * 10**4  # conversion factor between simulation and experimental timescale
 
-E0 = 0.0  # barrier height Fo
-E1 = 0.0  # barrier height F1
-psi_1 = 4.0  # chemical driving force on Fo
-psi_2 = -2.0  # chemical driving force on F1
+E0 = 2.0  # barrier height Fo
+E1 = 2.0  # barrier height F1
+psi_1 = 8.0  # chemical driving force on Fo
+psi_2 = -4.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -549,7 +549,7 @@ def plot_2D_prob_flux_thesis():
     Ecouplelst = ['$0$', '$4$', '$8$', '$16$', '$32$', '$128$']
 
     plt.figure()
-    f1, ax1 = plt.subplots(2, 3, figsize=(6, 4))
+    f1, ax1 = plt.subplots(3, 2, figsize=(6, 9))
 
     # Find max prob. to set plot range
     if E0 == 2.0:
@@ -617,11 +617,11 @@ def plot_2D_prob_flux_thesis():
         flux_array = zeros((2, N, N))
         calc_flux_2(prob_ss_array, drift_at_pos, diffusion_at_pos, flux_array, N, dx)
         flux_array = asarray(flux_array) / (dx * dx)
-        print(ii, ii//3, ii%3)
-        cs = ax1[ii // 3, ii % 3].contourf(prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=prob_max)
+        print(ii, ii // 2, ii % 2)
+        cs = ax1[ii // 2, ii % 2].contourf(N*prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=N*prob_max)
 
         # select fewer arrows to draw
-        M = 15  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
+        M = 12  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
         fluxX = empty((M, M))
         fluxY = empty((M, M))
 
@@ -630,34 +630,34 @@ def plot_2D_prob_flux_thesis():
                 fluxX[k, l] = average(flux_array[0, ...][(N//M * k):(N//M * (k + 1)), (N//M * l):(N//M * (l + 1))])
                 fluxY[k, l] = average(flux_array[1, ...][(N//M * k):(N//M * (k + 1)), (N//M * l):(N//M * (l + 1))])
 
-        ax1[ii // 3, ii % 3].quiver(positions[::(N // M)]*(N/6), positions[::(N // M)]*(N/6), fluxX.T, fluxY.T,
+        ax1[ii // 2, ii % 2].quiver(positions[::(N // M)]*(N/6), positions[::(N // M)]*(N/6), fluxX.T, fluxY.T,
                        units='xy', angles='xy', scale_units='xy', pivot='mid')
 
-        if ii % 3 == 0:
-            ax1[ii // 3, ii % 3].set_ylabel(r'$\theta_{\rm 1}$', fontsize=14)
-            ax1[ii // 3, ii % 3].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
-        else:
-            ax1[ii // 3, ii % 3].set_yticklabels(['', '', '', '', '', '', ''])
-        if ii == 0:
-            ax1[ii // 3, ii % 3].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouplelst[ii]))
-        else:
-            ax1[ii // 3, ii % 3].set_title("{}".format(Ecouplelst[ii]))
-        if ii < 3:
-            ax1[ii // 3, ii % 3].set_xticklabels(['', '', '', '', '', '', ''])
-        else:
-            ax1[ii // 3, ii % 3].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
-            ax1[ii // 3, ii % 3].set_xlabel(r'$\theta_{\rm o}$', fontsize=14)
+        ax1[ii // 2, ii % 2].spines['right'].set_visible(False)
+        ax1[ii // 2, ii % 2].spines['top'].set_visible(False)
+        ax1[ii // 2, ii % 2].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        ax1[ii // 2, ii % 2].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
 
-        ax1[ii // 3, ii % 3].spines['right'].set_visible(False)
-        ax1[ii // 3, ii % 3].spines['top'].set_visible(False)
-        ax1[ii // 3, ii % 3].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
-        ax1[ii // 3, ii % 3].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        if ii % 2 == 0:
+            ax1[ii // 2, ii % 2].set_ylabel(r'$\theta_{\rm 1}$', fontsize=16)
+            ax1[ii // 2, ii % 2].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        else:
+            ax1[ii // 2, ii % 2].set_yticklabels(['', '', '', '', '', '', ''])
+        if ii == 0:
+            ax1[ii // 2, ii % 2].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouplelst[ii]))
+        else:
+            ax1[ii // 2, ii % 2].set_title("{}".format(Ecouplelst[ii]))
+        if ii // 2 < 2:
+            ax1[ii // 2, ii % 2].set_xticklabels(['', '', '', '', '', '', ''])
+        if ii // 2 == 2:
+            ax1[ii // 2, ii % 2].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+            ax1[ii // 2, ii % 2].set_xlabel(r'$\theta_{\rm o}$', fontsize=16)
 
     cax = f1.add_axes([0.94, 0.09, 0.03, 0.8])
     cbar = f1.colorbar(
         cs, cax=cax, orientation='vertical', ax=ax1
     )
-    cbar.set_label(r'$p_{\rm ss}(\theta_{\rm o}, \theta_1)$', fontsize=14)
+    cbar.set_label(r'$p(\theta_{\rm o}, \theta_1)$', fontsize=16)
     cbar.formatter.set_scientific(True)
     cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
@@ -673,7 +673,7 @@ def plot_energy_flow(target_dir):
     phase_array = array([0.0])
     psi1_array = array([4.0])
     psi2_array = array([-2.0])
-    barrier_height = array([2.0])
+    barrier_height = array([0.0])
     input_file_name = (target_dir + "data/200915_energyflows/E0_{0}_E1_{1}/n1_{4}_n2_{5}/" + "power_heat_info_" +
                        "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_Ecouple_{6}" + "_outfile.dat")
     output_file_name = (target_dir + "results/" + "Power_bound_Ecouple_" +
@@ -687,7 +687,7 @@ def plot_energy_flow(target_dir):
                 for j, E0 in enumerate(barrier_height):
                     E1 = E0
                     if E0 == 0.0:
-                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double)))
+                        Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad)))
                     else:
                         Ecouple_array_total = sort(concatenate((Ecouple_array, Ecouple_array_double, Ecouple_array_quad,
                                                                 Ecouple_array_peak)))
@@ -714,21 +714,18 @@ def plot_energy_flow(target_dir):
 
                     ax.axhline(0, color='black')
 
-                    ax.plot(Ecouple_array_total, power_x, '-o', label=r'$\mathcal{P}_{\rm H^+}$', color='tab:green')
-                    # ax.plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
-                    # ax.plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
-                    # ax.plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\mathcal{P}_{\rm o \to 1}$', color='tab:purple')
-                    ax.plot(Ecouple_array_total, -energy_xy - learning_rate, '-o',
-                            label=r'$\mathcal{P}_{\rm o \to 1} + \beta^{-1}\dot{I}_{\rm o}$', color='tab:grey')
-                    ax.plot(Ecouple_array_total, -power_y, '-o', label=r'$\mathcal{P}_{\rm ATP}$', color='tab:orange')
+                    ax.plot(Ecouple_array_total, power_x/psi_1, '-o', label=r'$\mathcal{J}_{\rm o}$', color='tab:green')
+                    ax.plot(Ecouple_array_total, power_x/psi_1 - power_y/psi_2, '-o', color='tab:purple')
+                    ax.plot(Ecouple_array_total, exp(-(0.75*Ecouple_array_total-10)), '-o', color='tab:grey')
+                    ax.plot(Ecouple_array_total, power_y/psi_2, '-o', label=r'$\mathcal{J}_1$', color='tab:orange')
 
-                ax.set_ylim((8, None))
+                ax.set_ylim((10**(-4), None))
                 ax.set_xlim((2, None))
 
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
                 ax.spines['bottom'].set_visible(False)
-                ax.set_xscale('log')
+                # ax.set_xscale('log')
                 ax.set_yscale('log')
                 ax.set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
                 ax.set_ylabel(r'$\textrm{Energy flow} \ (k_{\rm B}T / \rm s)$', fontsize=16)
@@ -1308,7 +1305,7 @@ def plot_2D_prob_flux_phi_thesis(target_dir):
     phaselst = [r'$0$', r'$\pi / 3$', r'$2 \pi / 3$', r'$\pi$', r'$4 \pi / 3$', r'$5 \pi / 3$', r'$2 \pi$']
 
     plt.figure()
-    f1, ax1 = plt.subplots(2, 3, figsize=(6, 4))
+    f1, ax1 = plt.subplots(3, 2, figsize=(6, 9))
 
     # Find max prob. to set plot range
     input_file_name = (
@@ -1364,46 +1361,46 @@ def plot_2D_prob_flux_phi_thesis(target_dir):
         flux_array = asarray(flux_array) / (dx * dx)
 
         if ii == 0:
-            cs = ax1[ii // 3, ii % 3].contourf(prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=prob_max)
+            cs = ax1[ii // 2, ii % 2].contourf(N*prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=N*prob_max)
         else:
-            ax1[ii // 3, ii % 3].contourf(prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=prob_max)
+            ax1[ii // 2, ii % 2].contourf(N*prob_ss_array.T, cmap=plt.cm.cool, vmin=0, vmax=N*prob_max)
 
         # select fewer arrows to draw
-        M = 15  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
+        M = 12  # number of arrows in a row/ column, preferably a number such that N/M is an integer.
         fluxX = empty((M, M))
         fluxY = empty((M, M))
         for k in range(M):
             fluxX[k] = flux_array[0, ...][int(N / M) * k, ::int(N / M)]
             fluxY[k] = flux_array[1, ...][int(N / M) * k, ::int(N / M)]
 
-        ax1[ii // 3, ii % 3].quiver(positions[::int(N / M)]*(N/6), positions[::int(N / M)]*(N/6), fluxX.T, fluxY.T,
+        ax1[ii // 2, ii % 2].quiver(positions[::int(N / M)]*(N/6), positions[::int(N / M)]*(N/6), fluxX.T, fluxY.T,
                                     units='xy', angles='xy', scale_units='xy')
 
-        if ii % 3 == 0:
-            ax1[ii // 3, ii % 3].set_ylabel(r'$\theta_{\rm 1}$', fontsize=14)
-            ax1[ii // 3, ii % 3].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
-        else:
-            ax1[ii // 3, ii % 3].set_yticklabels(['', '', '', '', '', '', ''])
-        if ii == 0:
-            ax1[ii // 3, ii % 3].set_title(r"$n \phi$" + "={}".format(phaselst[ii]))
-        else:
-            ax1[ii // 3, ii % 3].set_title("{}".format(phaselst[ii]))
-        if ii < 3:
-            ax1[ii // 3, ii % 3].set_xticklabels(['', '', '', '', '', '', ''])
-        else:
-            ax1[ii // 3, ii % 3].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
-            ax1[ii // 3, ii % 3].set_xlabel(r'$\theta_{\rm o}$', fontsize=14)
+        ax1[ii // 2, ii % 2].spines['right'].set_visible(False)
+        ax1[ii // 2, ii % 2].spines['top'].set_visible(False)
+        ax1[ii // 2, ii % 2].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        ax1[ii // 2, ii % 2].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
 
-        ax1[ii // 3, ii % 3].spines['right'].set_visible(False)
-        ax1[ii // 3, ii % 3].spines['top'].set_visible(False)
-        ax1[ii // 3, ii % 3].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
-        ax1[ii // 3, ii % 3].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        if ii % 2 == 0:
+            ax1[ii // 2, ii % 2].set_ylabel(r'$\theta_{\rm 1}$', fontsize=16)
+            ax1[ii // 2, ii % 2].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+        else:
+            ax1[ii // 2, ii % 2].set_yticklabels(['', '', '', '', '', '', ''])
+        if ii == 0:
+            ax1[ii // 2, ii % 2].set_title(r"$n \phi$" + "={}".format(phaselst[ii]))
+        else:
+            ax1[ii // 2, ii % 2].set_title("{}".format(phaselst[ii]))
+        if ii < 4:
+            ax1[ii // 2, ii % 2].set_xticklabels(['', '', '', '', '', '', ''])
+        else:
+            ax1[ii // 2, ii % 2].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+            ax1[ii // 2, ii % 2].set_xlabel(r'$\theta_{\rm o}$', fontsize=16)
 
     cax = f1.add_axes([0.94, 0.09, 0.03, 0.8])
     cbar = f1.colorbar(
         cs, cax=cax, orientation='vertical', ax=ax1
     )
-    cbar.set_label(r'$p_{\rm ss}(\theta_{\rm o}, \theta_1)$', fontsize=14)
+    cbar.set_label(r'$p(\theta_{\rm o}, \theta_1)$', fontsize=16)
     cbar.formatter.set_scientific(True)
     cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
@@ -1538,7 +1535,7 @@ def plot_energy_flow_zoom(target_dir):
                         "E0_{0}_E1_{1}_psi1_{2}_psi2_{3}_n1_{4}_n2_{5}_phi_{6}" + "_zoom_.pdf")
 
     plt.figure()
-    f, ax = plt.subplots(2, 1, sharex='all', figsize=(5, 7))
+    f, ax = plt.subplots(2, 1, sharex='all', figsize=(5, 8))
     for j in range(2):
         E1 = E0
         if E0 == 0.0:
@@ -1569,10 +1566,10 @@ def plot_energy_flow_zoom(target_dir):
         ax[j].axhline(0, color='black')
 
         ax[j].plot(Ecouple_array_total, power_x, '-o', label=r'$\mathcal{P}_{\rm H^+}$', color='tab:blue')
-        ax[j].plot(Ecouple_array_total, power_y, '-o', label=r'$\mathcal{P}_{\rm ATP}$', color='tab:orange')
-        ax[j].plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
-        ax[j].plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
         ax[j].plot(Ecouple_array_total, -energy_xy, '-o', label=r'$\mathcal{P}_{\rm o \to 1}$', color='tab:purple')
+        ax[j].plot(Ecouple_array_total, heat_y, '-o', label=r'$\dot{Q}_1$', color='tab:red')
+        ax[j].plot(Ecouple_array_total, heat_x, '-o', label=r'$\dot{Q}_{\rm o}$', color='tab:green')
+        ax[j].plot(Ecouple_array_total, power_y, '-o', label=r'$\mathcal{P}_{\rm ATP}$', color='tab:orange')
 
         if j == 0:
             ax[j].set_ylim((-700, 700))
@@ -1590,7 +1587,7 @@ def plot_energy_flow_zoom(target_dir):
         ax[j].set_ylabel(r'$\textrm{Energy flow} \ (k_{\rm B}T \cdot \rm s^{-1})$', fontsize=16)
         ax[j].tick_params(axis='both', labelsize=14)
         ax[j].yaxis.offsetText.set_fontsize(14)
-        # ax.legend(fontsize=14, frameon=False, ncol=1, loc='best')
+    ax[0].legend(fontsize=14, frameon=False, ncol=1, loc='best', bbox_to_anchor=(1, 0.8))
 
     f.text(0.0, 0.9, r'$\rm a)$', ha='center', fontsize=16)
     f.text(0.0, 0.48, r'$\rm b)$', ha='center', fontsize=16)
@@ -1659,7 +1656,7 @@ def plot_2D_cm_rel_prob(target_dir):
     Ecouplelabels = ['$0$', '$4$', '$8$', '$16$', '$32$', '$128$']
 
     plt.figure()
-    f1, ax1 = plt.subplots(2, 3, figsize=(6, 4))
+    f1, ax1 = plt.subplots(3, 2, figsize=(6, 9))
 
     # Find max prob. to set plot range
     input_file_name = (
@@ -1697,34 +1694,35 @@ def plot_2D_cm_rel_prob(target_dir):
                 # if (j < i and j + i < N) or (j > i and N < (j + i)):
                 prob_new[i, (j + int(N/2)) % N] = prob_ss_array[(i + j) % N, (i - j) % N]
 
-        cs = ax1[ii // 3, ii % 3].contourf(prob_new.T, cmap=plt.cm.cool, vmin=0, vmax=prob_max)
+        cs = ax1[ii // 2, ii % 2].contourf(N*prob_new.T, cmap=plt.cm.cool, vmin=0, vmax=N*prob_max)
 
         if ii == 0:
-            ax1[ii // 3, ii % 3].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouplelabels[ii]))
+            ax1[ii // 2, ii % 2].set_title(r"$\beta E_{\rm couple}$" + "={}".format(Ecouplelabels[ii]), fontsize=16)
         else:
-            ax1[ii // 3, ii % 3].set_title(Ecouplelabels[ii])
-        if ii % 3 == 0:
-            ax1[ii // 3, ii % 3].set_ylabel(r'$\Delta \theta/2$')
-            ax1[ii // 3, ii % 3].set_yticklabels(['$-\pi$', '', '', '$0$', '', '', '$\pi$'])
+            ax1[ii // 2, ii % 2].set_title(Ecouplelabels[ii], fontsize=16)
+        if ii % 2 == 0:
+            ax1[ii // 2, ii % 2].set_ylabel(r'$\Delta \theta/2$', fontsize=16)
+            ax1[ii // 2, ii % 2].set_yticklabels(['$-\pi$', '', '', '$0$', '', '', '$\pi$'], fontsize=14)
         else:
-            ax1[ii // 3, ii % 3].set_yticklabels(['', '', '', '', '', '', ''])
-        if ii // 3 == 1:
-            ax1[ii // 3, ii % 3].set_xlabel(r'$\bar{\theta}$')
-            ax1[ii // 3, ii % 3].set_xticklabels(['$0$', '', '$\pi/3$', '', '$2 \pi /3$', '', '$2 \pi$'])
+            ax1[ii // 2, ii % 2].set_yticklabels(['', '', '', '', '', '', ''])
+        if ii // 2 == 2:
+            ax1[ii // 2, ii % 2].set_xlabel(r'$\bar{\theta}$', fontsize=16)
+            ax1[ii // 2, ii % 2].set_xticklabels(['$0$', '', '$\pi/3$', '', '$2 \pi /3$', '', '$2 \pi$'], fontsize=14)
         else:
-            ax1[ii // 3, ii % 3].set_xticklabels(['', '', '', '', '', '', ''])
-        ax1[ii // 3, ii % 3].spines['right'].set_visible(False)
-        ax1[ii // 3, ii % 3].spines['top'].set_visible(False)
-        ax1[ii // 3, ii % 3].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
-        ax1[ii // 3, ii % 3].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+            ax1[ii // 2, ii % 2].set_xticklabels(['', '', '', '', '', '', ''])
+        ax1[ii // 2, ii % 2].spines['right'].set_visible(False)
+        ax1[ii // 2, ii % 2].spines['top'].set_visible(False)
+        ax1[ii // 2, ii % 2].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
+        ax1[ii // 2, ii % 2].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
 
     cax = f1.add_axes([0.94, 0.09, 0.03, 0.8])
     cbar = f1.colorbar(
-        cs, cax=cax, orientation='vertical', ax=ax1, ticks=[0, 10**(-5), 2*10**(-5), 3*10**(-5), 4*10**(-5)]
+        cs, cax=cax, orientation='vertical', ax=ax1#, ticks=[0, 10**(-5), 2*10**(-5), 3*10**(-5), 4*10**(-5)]
     )
-    cbar.set_label(r'$p_{\rm ss}(\bar{\theta}, \frac{\Delta \theta}{2})$', fontsize=14)
+    cbar.set_label(r'$p_{\rm ss}(\bar{\theta}, \frac{\Delta \theta}{2})$', fontsize=16)
     cbar.formatter.set_scientific(True)
     cbar.formatter.set_powerlimits((0, 0))
+    cbar.ax.tick_params(labelsize=14)
     cbar.update_ticks()
 
     plt.subplots_adjust(hspace=0.3)
@@ -2241,16 +2239,15 @@ def plot_2D_prob_double(target_dir):
         pmarg = trapz(prob_ss_array, axis=1)
         pcond = prob_ss_array / pmarg[:, None]
 
-        cs = ax1[i].contourf(pcond.T, cmap=plt.cm.cool, vmin=0, vmax=max_prob)
+        cs = ax1[i].contourf(N*pcond.T, cmap=plt.cm.cool, vmin=0, vmax=N*max_prob)
 
         ax1[i].set_xlabel(r'$\theta_{\rm o}$', fontsize=14)
+        ax1[i].set_xticks([0, N / 6, N / 3, N / 2, 2 * N / 3, 5 * N / 6, N])
+        ax1[i].set_yticks([0, N / 6, N / 3, N / 2, 2 * N / 3, 5 * N / 6, N])
         ax1[i].set_yticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
         ax1[i].set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
-
         ax1[i].spines['right'].set_visible(False)
         ax1[i].spines['top'].set_visible(False)
-        ax1[i].set_xticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
-        ax1[i].set_yticks([0, N/6, N/3, N/2, 2*N/3, 5*N/6, N])
 
     ax1[0].set_title(r'$\beta E_{\rm o} = \beta E_1 = %.f$' % 0)
     ax1[1].set_title(r'$%.f$' % 2)
@@ -2262,7 +2259,7 @@ def plot_2D_prob_double(target_dir):
     cbar = f1.colorbar(
         cs, cax=cax, orientation='vertical', ax=ax1
     )
-    cbar.set_label(r'$p_{\rm ss}(\theta_1| \theta_{\rm o})$', fontsize=14)
+    cbar.set_label(r'$p(\theta_1| \theta_{\rm o})$', fontsize=14)
     cbar.formatter.set_scientific(True)
     cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
@@ -2920,11 +2917,11 @@ def plot_super_grid_nn(target_dir):  # grid of plots of output power, entropy ra
 
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
-    heat_work_info(target_dir)
+    # heat_work_info(target_dir)
     # plot_power_efficiency_Ecouple_hor(target_dir)
     # plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
-    # plot_energy_flow(target_dir)
+    plot_energy_flow(target_dir)
     # plot_power_Ecouple_grid(target_dir)
     # plot_efficiency_Ecouple_grid(target_dir)
     # plot_nn_power_efficiency_Ecouple(target_dir)
