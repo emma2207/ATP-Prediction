@@ -15,8 +15,8 @@ timescale = 4.8 * 10**7
 
 E0 = 2.0  # barrier height Fo
 E1 = 2.0  # barrier height F1
-psi_1 = 8.0  # chemical driving force on Fo
-psi_2 = -4.0  # chemical driving force on F1
+psi_1 = 4.0  # chemical driving force on Fo
+psi_2 = -2.0  # chemical driving force on F1
 num_minima1 = 3.0  # number of barriers in Fo's landscape
 num_minima2 = 3.0  # number of barriers in F1's landscape
 
@@ -400,7 +400,7 @@ def plot_power_efficiency_Ecouple_hor(target_dir):
     axarr[0].spines['top'].set_visible(False)
     axarr[0].spines['bottom'].set_visible(False)
     axarr[0].set_xlim((1.7, 140))
-    axarr[0].set_ylim((-60*(timescale/timescale_old), 32*(timescale/timescale_old)))
+    # axarr[0].set_ylim((-42*(timescale/timescale_old), 18*(timescale/timescale_old)))
     axarr[0].tick_params(axis='both', labelsize=14)
     axarr[0].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
     # axarr[0].set_yscale('log')
@@ -493,9 +493,9 @@ def plot_power_efficiency_Ecouple_ver(target_dir):
         if E0 > 0:
             idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y_array.argmin()])).argmin()
             print(Ecouple_array_tot[idx - 1], eff_array[idx - 1]/-0.5, Ecouple_array_tot[idx + 1], eff_array[idx + 1]/-0.5)
-            axarr[0].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 6, 10 ** 6,
+            axarr[0].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 10, 10 ** 10,
                                   facecolor=clr[j], alpha=0.4)
-            axarr[1].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 6, 10 ** 6,
+            axarr[1].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10 ** 6, 10 ** 10,
                                   facecolor=clr[j], alpha=0.4)
             axarr[0].plot(Ecouple_array_tot, -power_y_array*(timescale/timescale_old), '-', color=clr[j],
                           markersize=8)
@@ -772,7 +772,8 @@ def plot_power_Ecouple_grid(target_dir):
             # axarr[i, j].axhline(2*pi*inf_array[i*3 + j] * timescale, color='grey', linestyle=':', linewidth=1)
 
             # peak position estimate output power from theory
-            Ecouple_est = 3.31 + 4 * pi * (psi_1 - psi_2) / 9
+            # Ecouple_est = 3.31 + 4 * pi * (psi_1 - psi_2) / 9
+            Ecouple_est = 3.89 + 4 * pi * (psi_1 - psi_2) / 9
 
             # for jj, E0 in enumerate(barrier_heights):
 
@@ -810,7 +811,7 @@ def plot_power_Ecouple_grid(target_dir):
 
                 # calculate line position and width to include 'error' for peak power
                 idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y_array.argmin()])).argmin()
-                axarr[i, j].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], 10**(-2), 10**6,
+                axarr[i, j].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], 10**(-2), 10**10,
                                          facecolor=colorlst[jj], alpha=0.4)
 
                 axarr[i, j].plot(Ecouple_array_tot, -power_y_array*(timescale/timescale_old), 'o-', color=colorlst[jj], markersize=8)
@@ -888,7 +889,8 @@ def plot_efficiency_Ecouple_grid(target_dir):
 
             # rate calculations theory line
             pos = linspace(1, 150, 200)  # array of coupling strengths
-            theory = 1 - 3 * exp((pi / 3) * (psi_1 - psi_2) - 0.75 * pos)
+            # theory = 1 - 3 * exp((pi / 3) * (psi_1 - psi_2) - 0.75 * pos)
+            theory = 1 / (1 + 3 * exp((pi / 3) * (psi_1 - psi_2) - 0.75 * pos))
 
             # zero-barrier result
             input_file_name = ("/Users/Emma/sfuvault/SivakGroup/Emma/ATPsynthase/data/FP_Full_2D/" +
@@ -1281,7 +1283,7 @@ def plot_power_phi_single(target_dir):
     ax.spines['bottom'].set_visible(False)
     ax.yaxis.offsetText.set_fontsize(14)
     ax.set_xlim((0, 2.1))
-    ax.set_ylim((-41*(timescale/timescale_old), 10**5))
+    ax.set_ylim((-41*(timescale/timescale_old), 1 * 10**5))
     # ax.set_yticks([-40, -20, 0, 20])
 
     handles, labels = ax.get_legend_handles_labels()
@@ -1380,7 +1382,7 @@ def plot_2D_prob_flux_phi_thesis(target_dir):
             fluxY[k] = flux_array[1, ...][int(N / M) * k, ::int(N / M)]
 
         ax1[ii // 2, ii % 2].quiver(positions[::int(N / M)]*(N/6), positions[::int(N / M)]*(N/6), fluxX.T, fluxY.T,
-                                    units='xy', angles='xy', scale_units='xy')
+                                    units='xy', angles='xy', scale_units='xy', pivot='mid')
 
         ax1[ii // 2, ii % 2].spines['right'].set_visible(False)
         ax1[ii // 2, ii % 2].spines['top'].set_visible(False)
@@ -1581,7 +1583,7 @@ def plot_energy_flow_zoom(target_dir):
         if j == 0:
             ax[j].set_ylim((-700*(timescale/timescale_old), 700*(timescale/timescale_old)))
         else:
-            ax[j].set_ylim((-4*10**5, 4*10**5))
+            ax[j].set_ylim((-0.7*10**6, 0.7*10**6))
             ax[j].set_xlabel(r'$\beta E_{\rm couple}$', fontsize=16)
 
         ax[j].set_xlim((2, None))
@@ -1820,7 +1822,7 @@ def plot_entropy_production_Ecouple(target_dir):
                 color='tab:green')
 
         ax[i].set_xlim((2, None))
-        ax[i].set_ylim((10**4, None))
+        ax[i].set_ylim((1 * 10**4, None))
         ax[i].spines['right'].set_visible(False)
         ax[i].spines['top'].set_visible(False)
         ax[i].set_xscale('log')
@@ -2328,7 +2330,7 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
             idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y[:, i].argmin()])).argmin()
 
             for j in range(4):
-                axarr[j, i].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10**7, 10 ** 7,
+                axarr[j, i].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10**8, 10 ** 10,
                                          facecolor=colorlst[k], alpha=0.4)
 
             axarr[2, i].axhline(0, color='black')
@@ -2366,7 +2368,7 @@ def plot_super_grid_peak(target_dir):  # grid of plots of output power, entropy 
     axarr[0, 0].set_ylabel(r'$-\beta \mathcal{P}_{\rm ATP} \ \rm (s^{-1})$', fontsize=14)
     axarr[1, 0].set_ylabel(r'$\beta \mathcal{P}_{\rm o \to 1} \ \rm (s^{-1})$', fontsize=14)
     axarr[2, 0].set_ylabel(r'$\dot{S}^{\rm o}_{\rm i} - \dot{S}^1_{\rm i} \ \rm (s^{-1})$', fontsize=14)
-    axarr[3, 0].set_ylabel(r'$\dot{I}_1 \ \rm (s^{-1})$', fontsize=14)
+    axarr[3, 0].set_ylabel(r'$-\dot{I}_{\rm o} \ \rm (s^{-1})$', fontsize=14)
     f.subplots_adjust(bottom=0.12, left=0.12, right=0.9, top=0.88, wspace=0.25, hspace=0.3)
 
     f.text(0.5, 0.95, r'$\beta \mu_{\rm H^+}\, (\rm rad^{-1})$', ha='center', fontsize=20)
@@ -2496,6 +2498,7 @@ def plot_flux_1D(target_dir):
     ax.set_xticks([0, pi/3, 2*pi/3, pi, 4*pi/3, 5*pi/6, 2*pi])
     # ax.set_yticks([0, 5*10**(-9), 10**(-8), 1.5*10**(-8)])
     ax.set_xticklabels(['$0$', '', '$2 \pi/3$', '', '$4 \pi/3$', '', '$ 2\pi$'])
+    ax.ticklabel_format(axis="y", style="", scilimits=(0, 0))
     ax.tick_params(axis='both', labelsize=14)
     ax.yaxis.offsetText.set_fontsize(14)
     ax.legend(fontsize=14, frameon=False, loc='best', title=r'$\theta_1$', title_fontsize=16)
@@ -2882,7 +2885,7 @@ def plot_super_grid_nn(target_dir):  # grid of plots of output power, entropy ra
             idx = (abs(Ecouple_array_tot - Ecouple_array_tot[power_y[:, i].argmin()])).argmin()
 
             for j in range(4):
-                axarr[j, i].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -2, 10 ** 7,
+                axarr[j, i].fill_between([Ecouple_array_tot[idx - 1], Ecouple_array_tot[idx + 1]], -10**10, 10 ** 10,
                                          facecolor='tab:orange', alpha=0.4)
 
             axarr[2, i].axhline(0, color='black')
@@ -2933,7 +2936,7 @@ def plot_super_grid_nn(target_dir):  # grid of plots of output power, entropy ra
 if __name__ == "__main__":
     target_dir = "/Users/Emma/sfuvault/SivakGroup/Emma/ATP-Prediction/"
     # heat_work_info(target_dir)
-    # plot_power_efficiency_Ecouple_hor(target_dir)
+    plot_power_efficiency_Ecouple_hor(target_dir)
     # plot_power_efficiency_Ecouple_ver(target_dir)
     # plot_2D_prob_flux_thesis()
     # plot_energy_flow(target_dir)
@@ -2959,6 +2962,6 @@ if __name__ == "__main__":
     # plot_info_Ecouple_dt(target_dir)
     # plot_info_Ecouple_steadystate(target_dir)
     # plot_info_Ecouple_calcs(target_dir)
-    plot_info_Ecouple_error(target_dir)
+    # plot_info_Ecouple_error(target_dir)
     # plot_nn_learning_rate_Ecouple(target_dir)
     # plot_super_grid_nn(target_dir)
